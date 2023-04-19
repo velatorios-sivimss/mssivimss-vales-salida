@@ -1,7 +1,7 @@
 server:
   port: 8080
   servlet:
-    contextPath: /mssivimss-arquetipo
+    contextPath: /mssivimss-vales-salida
 spring:
   mvc:
     pathmatch:
@@ -33,7 +33,9 @@ endpoints:
    dominio-consulta: http://localhost:8090/mssivimss-mod-catalogos/generico/consulta
    dominio-consulta-paginado: http://localhost:8090/mssivimss-mod-catalogos/generico/paginado
    dominio-crear: http://localhost:8090/mssivimss-mod-catalogos/generico/crear
+   dominio-insertar-multiple: http://localhost:8090/mssivimss-mod-catalogos/generico/insertarMultiple
    dominio-actualizar: http://localhost:8090/mssivimss-mod-catalogos/generico/actualizar
+   dominio-reportes: http://localhost:8088/mssivimss-reportes-jpr/generales/generar-reporte
 
 jwt:
   secretkey-flujo: funcionamuybien

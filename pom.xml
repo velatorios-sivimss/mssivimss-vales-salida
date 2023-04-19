@@ -9,10 +9,10 @@
 		<relativePath /> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.imss.sivimss</groupId>
-	<artifactId>arquetipo</artifactId>
+	<artifactId>vales-salida</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>catroles</name>
-	<description>Ms arquetipo</description>
+	<description>Ms para generar vales de salida</description>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<java.version>1.8</java.version>
