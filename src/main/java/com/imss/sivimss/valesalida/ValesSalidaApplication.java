@@ -12,10 +12,10 @@ import org.springframework.web.client.RestTemplate;
 import com.imss.sivimss.valesalida.util.NoRedirectSimpleClientHttpRequestFactory;
 
 @SpringBootApplication
-public class ArquetipoApplication {
+public class ValesSalidaApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(ArquetipoApplication.class, args);
+		SpringApplication.run(ValesSalidaApplication.class, args);
 	}
 
 	@Bean

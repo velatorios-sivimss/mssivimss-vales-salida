@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.io.IOException;
+import java.text.ParseException;
 import java.util.concurrent.CompletableFuture;
 
 /**
@@ -59,12 +60,30 @@ public class ValeSalidaController {
     @CircuitBreaker(name = "msflujo", fallbackMethod = "fallbackGenerico")
     @Retry(name = "msflujo", fallbackMethod = "fallbackGenerico")
     @TimeLimiter(name = "msflujo")
-    @PostMapping("/consulta-filtros")
+    @PostMapping("/consultar-folios-ods")
+    public CompletableFuture<?> consultarFoliosOds(@RequestBody DatosRequest request, Authentication authentication) throws IOException {
+        Response<?> response = valeSalidaService.consultarCatalogoOds(request, authentication);
+        return CompletableFuture.supplyAsync(() -> getResponseEntity(response));
+    }
+
+    @CircuitBreaker(name = "msflujo", fallbackMethod = "fallbackGenerico")
+    @Retry(name = "msflujo", fallbackMethod = "fallbackGenerico")
+    @TimeLimiter(name = "msflujo")
+    @PostMapping("/consultar-datos-ods")
+    public CompletableFuture<?> consultarDatosRegistro(@RequestBody DatosRequest request, Authentication authentication) throws IOException {
+        Response<?> response = valeSalidaService.consultarDatosPantallaRegistro(request, authentication);
+        return CompletableFuture.supplyAsync(() -> getResponseEntity(response));
+    }
+
+    @CircuitBreaker(name = "msflujo", fallbackMethod = "fallbackGenerico")
+    @Retry(name = "msflujo", fallbackMethod = "fallbackGenerico")
+    @TimeLimiter(name = "msflujo")
+    @PostMapping("/consultar-con-filtros")
     public CompletableFuture<?> consultarValesPorFiltros(@RequestBody DatosRequest request, Authentication authentication) throws IOException {
         Response<?> response = valeSalidaService.consultarVales(request, authentication);
         return CompletableFuture.supplyAsync(() -> getResponseEntity(response));
     }
-    
+
     @CircuitBreaker(name = "msflujo", fallbackMethod = "fallbackGenerico")
     @Retry(name = "msflujo", fallbackMethod = "fallbackGenerico")
     @TimeLimiter(name = "msflujo")
@@ -73,7 +92,7 @@ public class ValeSalidaController {
         Response<?> response = valeSalidaService.crearVale(request, authentication);
         return CompletableFuture.supplyAsync(() -> getResponseEntity(response));
     }
-    
+
     @CircuitBreaker(name = "msflujo", fallbackMethod = "fallbackGenerico")
     @Retry(name = "msflujo", fallbackMethod = "fallbackGenerico")
     @TimeLimiter(name = "msflujo")
@@ -83,6 +102,26 @@ public class ValeSalidaController {
         return CompletableFuture.supplyAsync(() -> getResponseEntity(response));
     }
 
+    @CircuitBreaker(name = "msflujo", fallbackMethod = "fallbackGenerico")
+    @Retry(name = "msflujo", fallbackMethod = "fallbackGenerico")
+    @TimeLimiter(name = "msflujo")
+    @PostMapping("/cambiar-estatus")
+    public CompletableFuture<?> cambiarEstatus(@RequestBody DatosRequest request, Authentication authentication) throws IOException {
+        Response<?> response = valeSalidaService.modificarVale(request, authentication);
+        return CompletableFuture.supplyAsync(() -> getResponseEntity(response));
+    }
+
+    @CircuitBreaker(name = "msflujo", fallbackMethod = "fallbackGenerico")
+    @Retry(name = "msflujo", fallbackMethod = "fallbackGenerico")
+    @TimeLimiter(name = "msflujo")
+    @PostMapping("/descargar-reporte")
+    public CompletableFuture<?> descargarReporte(@RequestBody DatosRequest request, Authentication authentication) throws IOException, ParseException {
+
+        Response<?> response = valeSalidaService.generarReportePdf(request, authentication);
+        return CompletableFuture
+                .supplyAsync(() -> new ResponseEntity<>(response, HttpStatus.valueOf(response.getCodigo())));
+
+    }
 
     /**
      * Crea el responseEntity para contestar la petici&oacute;n.

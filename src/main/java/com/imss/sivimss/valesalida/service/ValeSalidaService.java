@@ -1,10 +1,12 @@
 package com.imss.sivimss.valesalida.service;
 
+import com.imss.sivimss.valesalida.model.response.ValeSalidaDto;
 import com.imss.sivimss.valesalida.util.DatosRequest;
 import com.imss.sivimss.valesalida.util.Response;
 import org.springframework.security.core.Authentication;
 
 import java.io.IOException;
+import java.text.ParseException;
 
 public interface ValeSalidaService {
 
@@ -32,11 +34,15 @@ public interface ValeSalidaService {
     //     - solo se modifican las observaciones
     //     - se elimina articulo del detalle del vale
     Response<?> modificarVale(DatosRequest request, Authentication authentication);
+    Response<?> registrarEntrada(DatosRequest request, Authentication authentication);
+
+    Response<?> cambiarEstatus(DatosRequest request, Authentication authentication);
 
     // todo - eliminar articulo del detalle del vale de salida
     //      - se elimina el registro y se ajusta el stock
     //        - primero hay que sumar el stock al inventario, luego
     Response<?> eliminarArticuloDetalleVale(DatosRequest request);
 
-    Response<?> consultarCatalogoOds(Authentication authentication) throws IOException;
+    Response<?> consultarCatalogoOds(DatosRequest request, Authentication authentication) throws IOException;
+    Response<?> generarReportePdf(DatosRequest request, Authentication authentication) throws IOException, ParseException;
 }
