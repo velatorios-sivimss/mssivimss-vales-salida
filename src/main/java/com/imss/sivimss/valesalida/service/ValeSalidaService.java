@@ -33,8 +33,8 @@ public interface ValeSalidaService {
     //     - se modifican cantidades y observaciones de los articulos
     //     - solo se modifican las observaciones
     //     - se elimina articulo del detalle del vale
-    Response<?> modificarVale(DatosRequest request, Authentication authentication);
-    Response<?> registrarEntrada(DatosRequest request, Authentication authentication);
+    Response<?> modificarVale(DatosRequest request, Authentication authentication) throws IOException;
+    Response<?> registrarEntrada(DatosRequest request, Authentication authentication) throws IOException;
 
     Response<?> cambiarEstatus(DatosRequest request, Authentication authentication);
 

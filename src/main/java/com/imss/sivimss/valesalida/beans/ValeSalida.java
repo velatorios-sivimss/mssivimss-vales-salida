@@ -13,9 +13,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 
 import javax.xml.bind.DatatypeConverter;
-import java.text.DateFormat;
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.*;
 
 /**
@@ -32,10 +30,15 @@ public class ValeSalida {
         this.gson = new Gson();
     }
 
-    // consultar vale de salida (detalle)
-    //   - hay que recuperar tambien la lista de articulos del inventario del velatorio
-    //   - revisar si esta funcion cubre la consulta del reporte
-    public DatosRequest consultar(long id) {
+    /**
+     * Consulta el detalle de un Vale de Salida.
+     *
+     * @param id
+     * @param idDelegacion
+     * @return
+     */
+    public DatosRequest consultar(long id, Integer idDelegacion) {
+        // todo - revisar que funcione correctamente
         SelectQueryUtil queryUtil = new SelectQueryUtil();
         queryUtil.select("vs.ID_VALESALIDA as idValeSalida",
                         "v.ID_VELATORIO as idVelatorio",
@@ -53,6 +56,7 @@ public class ValeSalida {
                         "vs.NOM_RESPEQUIVELACION as nombreResponsableEquipo",
                         "vs.CVE_MATRICULARESPEQUIVELACION as matriculaResponsableEquipo",
                         "vs.CAN_ARTICULOS as totalArticulos",
+                        // todo - refactor, hay que cambiar de donde sale la direccion
                         "infoOds.DES_CALLE as calle",
                         "infoOds.NUM_EXTERIOR as numExt",
                         "infoOds.NUM_INTERIOR as numInt",
@@ -64,8 +68,8 @@ public class ValeSalida {
                         "dvs.CAN_ARTICULOS as cantidadArticulos",
                         "dvs.DES_OBSERVACION as observaciones")
                 .from("SVT_VALE_SALIDA vs")
-                // todo - pasar como parametro tambien el idDelegacion
                 .join("SVC_VELATORIO v", "vs.ID_VELATORIO = v.ID_VELATORIO")
+                .join("svc_delegacion d", "d.id_delegacion = :idDelegacion")
                 .join("SVC_ORDEN_SERVICIO ods", "vs.ID_ORDEN_SERVICIO = ods.ID_ORDEN_SERVICIO")
                 .join("SVC_FINADO usuFinado", "v.ID_VELATORIO = usuFinado.ID_VELATORIO", "usuFinado.ID_ORDEN_SERVICIO = ods.ID_ORDEN_SERVICIO")
                 .join("SVC_PERSONA perFinado", "usuFinado.ID_PERSONA = perFinado.ID_PERSONA")
@@ -76,7 +80,9 @@ public class ValeSalida {
                 .join("SVC_CP cp", "cp.ID_CODIGO_POSTAL = infoOds.ID_CP")
                 .leftJoin("SVT_VALE_SALIDADETALLE dvs", "dvs.ID_VALESALIDA = vs.ID_VALESALIDA");
         queryUtil.where("vs.ID_VALESALIDA = :idValeSalida")
-                .setParameter("idValeSalida", id);
+                .setParameter("idValeSalida", id)
+                .setParameter("idDelegacion", idDelegacion);
+
         String query = getQuery(queryUtil);
         final String encoded = getBinary(query);
         Map<String, Object> parametros = new HashMap<>();
@@ -88,32 +94,25 @@ public class ValeSalida {
         return datos;
     }
 
-    /**
-     * todo - agregar documentacion
-     * todo - remover no se esta usando
-     *
-     * @param idVelatorio
-     * @return
-     */
-    public DatosRequest consultarProductos(long idVelatorio) {
-        SelectQueryUtil queryUtil = new SelectQueryUtil();
-        // todo - movel el tipo de servicio a una constante tipo de servicio 2 - Renta de equipo
-        queryUtil.select("ID_ARTICULO as idArticulo",
-                        "a.DES_ARTICULO as nombreArticulo",
-                        "inventario.CAN_STOCK as cantidad")
-                .from("SVT_INVENTARIO inventario")
-                .join("SVT_ARTICULO a", "a.ID_ARTICULO = inventario.ID_ARTICULO")
-                .where("inventario.ID_TIPO_SERVICIO = :idTipoServicio",
-                        "inventario.ID_VELATORIO = :idVelatorio")
-                .setParameter("idTipoServicio", 2)
-                .setParameter("idVelatorio", idVelatorio);
-        String query = getQuery(queryUtil);
-        Map<String, Object> parametros = new HashMap<String, Object>();
-        parametros.put(AppConstantes.QUERY, getBinary(query));
-        DatosRequest datos = new DatosRequest();
-        datos.setDatos(parametros);
-        return datos;
-    }
+//    public DatosRequest consultarProductos(long idVelatorio) {
+//        SelectQueryUtil queryUtil = new SelectQueryUtil();
+//        // todo - mover el tipo de servicio a una constante tipo de servicio 2 - Renta de equipo
+//        queryUtil.select("ID_ARTICULO as idArticulo",
+//                        "a.DES_ARTICULO as nombreArticulo",
+//                        "inventario.CAN_STOCK as cantidad")
+//                .from("SVT_INVENTARIO inventario")
+//                .join("SVT_ARTICULO a", "a.ID_ARTICULO = inventario.ID_ARTICULO")
+//                .where("inventario.ID_TIPO_SERVICIO = :idTipoServicio",
+//                        "inventario.ID_VELATORIO = :idVelatorio")
+//                .setParameter("idTipoServicio", 2)
+//                .setParameter("idVelatorio", idVelatorio);
+//        String query = getQuery(queryUtil);
+//        Map<String, Object> parametros = new HashMap<String, Object>();
+//        parametros.put(AppConstantes.QUERY, getBinary(query));
+//        DatosRequest datos = new DatosRequest();
+//        datos.setDatos(parametros);
+//        return datos;
+//    }
 
     /**
      * Elimina los productos de un vale de salida
@@ -121,9 +120,8 @@ public class ValeSalida {
      * @param idValeSalida
      * @return
      */
-    public DatosRequest eliminarProductosVale(Long idValeSalida) {
-        // todo - no hay delete, por lo que se tienen que hacer un borrado logico con el campo cve_estatus
-        String query = "UPDATE SVT_VALE_SALIDADETALLE set cve_estatus = false where ID_VALESALIDA = " + idValeSalida;
+    public DatosRequest eliminarArticulosValeSalida(Long idValeSalida) {
+        String query = "UPDATE SVT_VALE_SALIDADETALLE set CVE_ESTATUS = false WHERE ID_VALESALIDA = " + idValeSalida;
 
         Map<String, Object> parametros = new HashMap<>();
         DatosRequest datos = new DatosRequest();
@@ -156,7 +154,7 @@ public class ValeSalida {
                         "vs.ID_ORDEN_SERVICIO as idOds",
                         "ods.CVE_FOLIO as folioOds",
                         "vs.FEC_SALIDA as fechaSalida",
-//                        "vs.FEC_ENTRADA as fechaEntrada",
+                        "vs.FEC_ENTRADA as fechaEntrada",
                         "vs.NUM_DIA_NOVENARIO as diasNovenario",
                         "NOM_RESPON_INSTA as nombreResponsableInstalacion",
                         "CVE_MATRICULA_RESPON as matriculaResponsableInstalacion",
@@ -186,9 +184,6 @@ public class ValeSalida {
         }
         String query = getQuery(queryUtil);
         final String encoded = getBinary(query);
-//        Map<String, Object> parametros = new HashMap<>();
-//        parametros.put(AppConstantes.QUERY, encoded);
-
         request.getDatos().put(AppConstantes.QUERY, encoded);
         request.getDatos().remove(AppConstantes.DATOS);
         return request;
@@ -204,26 +199,17 @@ public class ValeSalida {
      * @return
      */
     public DatosRequest consultarDatosOds(ConsultaDatosPantallaRequest request) {
-        // todo - recuperar tanto el request como el idVelatorio
+        // todo - probar los cambios
 
         // todo - validar que los campos no sean nulos
         SelectQueryUtil queryUtil = new SelectQueryUtil();
         queryUtil.select("v.ID_VELATORIO as idVelatorio",
                         "v.NOM_VELATORIO as nombreVelatorio",
                         "d.DES_DELEGACION as nombreDelegacion",
-//                        "vs.CVE_FOLIO as folioValeSalida",
                         "ods.ID_ORDEN_SERVICIO as idOds",
                         "ods.CVE_FOLIO as request",
                         "perContratante.NOM_PERSONA as nombreContratante",
                         "perFinado.NOM_PERSONA as nombreFinado",
-//                        "vs.FEC_SALIDA as fechaSalida",
-//                        "vs.FEC_ENTRADA as fechaEntrada",
-//                        "vs.NUM_DIA_NOVENARIO as diasNovenario",
-//                        "vs.NOM_RESPON_INSTA as nombreResponsableInstalacion",
-//                        "vs.CVE_MATRICULA_RESPON as matriculaResponsableInstalacion",
-//                        "vs.NOM_RESPEQUIVELACION as nombreResponsableEquipo",
-//                        "vs.CVE_MATRICULARESPEQUIVELACION as matriculaResponsableEquipo",
-//                        "vs.CAN_ARTICULOS as totalArticulos",
                         "infoOds.DES_CALLE as calle",
                         "infoOds.NUM_EXTERIOR as numExt",
                         "infoOds.NUM_INTERIOR as numInt",
@@ -235,7 +221,7 @@ public class ValeSalida {
                         "inventario.CAN_STOCK as cantidadArticulos")
                 .from("SVC_ORDEN_SERVICIO ods")
                 .join("SVC_VELATORIO v", "v.ID_VELATORIO = :idVelatorio")
-                .join("SVC_DELEGACION d", "d.id_delegacion = v.id_delegacion")
+                .join("SVC_DELEGACION d", "d.ID_DELEGACION = v.ID_DELEGACION")
                 .join("SVC_FINADO usuFinado", "v.ID_VELATORIO = usuFinado.ID_VELATORIO", "usuFinado.ID_ORDEN_SERVICIO = ods.ID_ORDEN_SERVICIO")
                 .join("SVC_PERSONA perFinado", "usuFinado.ID_PERSONA = perFinado.ID_PERSONA")
                 .join("SVC_CONTRATANTE usuContratante", "ods.ID_CONTRATANTE = usuContratante.ID_CONTRATANTE")
@@ -243,7 +229,8 @@ public class ValeSalida {
                 .join("SVC_INFORMACION_SERVICIO infoServ", "infoServ.ID_ORDEN_SERVICIO = ods.ID_ORDEN_SERVICIO")
                 .join("SVC_INFORMACION_SERVICIO_VELACION infoOds", "infoOds.ID_INFORMACION_SERVICIO = infoServ.ID_INFORMACION_SERVICIO")
                 .join("SVC_CP cp", "cp.ID_CODIGO_POSTAL = infoOds.ID_CP")
-                .leftJoin("SVT_INVENTARIO inventario", "inventario.ID_VELATORIO = v.ID_VELATORIO");
+                .leftJoin("SVT_INVENTARIO inventario", "inventario.ID_VELATORIO = v.ID_VELATORIO",
+                        "inventario.ID_TIPO_SERVICIO = 2");
 
         queryUtil.where("ods.CVE_FOLIO = :folioOds")
                 .setParameter("folioOds", request.getFolioOds())
@@ -284,10 +271,10 @@ public class ValeSalida {
         Map<String, Object> parametros = new HashMap<>();
         QueryHelper queryHelper = new QueryHelper("INSERT INTO SVT_VALE_SALIDA");
         queryHelper.agregarParametroValues("ID_VELATORIO", String.valueOf(valeSalida.getIdVelatorio()));
+        // todo - como se va a crear el folio del vale de salida
 //        queryHelper.agregarParametroValues("CVE_FOLIO", valeSalida.getFolioValeSalida());
         queryHelper.agregarParametroValues("ID_ORDEN_SERVICIO", String.valueOf(valeSalida.getIdOds()));
         queryHelper.agregarParametroValues("FEC_SALIDA", "STR_TO_DATE('" + String.valueOf(valeSalida.getFechaSalida()) + "', '%d-%m-%Y')");
-//        queryHelper.agregarParametroValues("FEC_SALIDA", String.valueOf(valeSalida.getFechaSalida()));
 //        queryHelper.agregarParametroValues("NOM_RESPON_ENTREGA", String.valueOf(valeSalida.getNombreResponsableEntrega()));
 //        queryHelper.agregarParametroValues("CVE_MATRICULA_RESPON", String.valueOf(valeSalida.getMatriculaResponsableEntrega()));
         queryHelper.agregarParametroValues("NOM_RESPON_INSTA", "'" + String.valueOf(valeSalida.getNombreResponsableInstalacion()) + "'");
@@ -336,8 +323,13 @@ public class ValeSalida {
         return query.toString();
     }
 
-    // modificar vale de salida
-    //   - hay que modificar tambien el registro de cada articulo que se modifique en el registro
+    /**
+     * Modifica un Vale de salida, por si solo se modifican los art&iacute;culos o si se va a registar una entrada.
+     *
+     * @param valeSalida
+     * @param registrarEntrada
+     * @return
+     */
     public DatosRequest modificarVale(ValeSalidaDto valeSalida, boolean registrarEntrada) {
         // todo - agregar solo los campos que se puedan modificar
         // que es lo que se va a modificar en esta parte?
@@ -348,11 +340,11 @@ public class ValeSalida {
         // se registran nombres de los responsables
         // todo - recuperar los nombres de los responsables y la matricula
         if (registrarEntrada) {
+            // todo - tengo que recuperar los nombres completos
             queryHelper.agregarParametroValues("FEC_SALIDA", "STR_TO_DATE('" + String.valueOf(valeSalida.getFechaSalida()) + "', '%d-%m-%Y')");
-            // todo - verificar que los nombres y matricula sean correctos
-            // verificar que solo sean esos datos los que se van a estar guardando
-            queryHelper.agregarParametroValues("nom_responsable", "'" + String.valueOf(valeSalida.getCantidadArticulos()) + "'");
-            queryHelper.agregarParametroValues("cve_matricula_responsable", "'" + valeSalida.getCantidadArticulos() + "'");
+            // todo - verificar que los nombres y matricula sean correctos, verificar que solo sean esos datos los que se van a estar guardando
+            queryHelper.agregarParametroValues("NOM_RESPONSABLE", "'" + String.valueOf(valeSalida.getCantidadArticulos()) + "'");
+            queryHelper.agregarParametroValues("CVE_MATRICULA_RESPONSABLE", "'" + valeSalida.getCantidadArticulos() + "'");
         }
 
         String query = queryHelper.obtenerQueryActualizar();
@@ -391,7 +383,8 @@ public class ValeSalida {
     }
 
     /**
-     * todo - agregar documentacion
+     * Consulta los folios de las &oacute;rdenes de servicio que est&eacute;n activas, para poder llenar el
+     * <b>combo</b> en la pantalla para mostrar dichos folios.
      *
      * @return
      */
@@ -404,15 +397,17 @@ public class ValeSalida {
         return getDatosRequest(queryUtil);
     }
 
-    public void consultarValeSalida() {
-
-    }
-
+    /**
+     * Realiza el llenado de los par&aacute;metros para poder pintar los datos en el servicio de reportes.
+     *
+     * @param reporteDto
+     * @return
+     * @throws ParseException
+     */
     public Map<String, Object> generarReporte(ReporteDto reporteDto) throws ParseException {
 
-        // todo lo que se puede hacer es hacer la consulta y con los datos que me regresa la consulta, armar el objeto que va a usar el formato
-        // hay que revisar como pasar una lista de objetos al jasper
-        // todo - hay que pasar todos los parametros al map
+
+        // todo - hay que hacer el formato de las fechas para que se puedan imprimir correctamente en el formato
 
 //        String fechaCompleta = reporteDto.getMes() + "-" + reporteDto.getAnio();
 //        Date dateF = new SimpleDateFormat("MMMM-yyyy").parse(fechaCompleta);
@@ -420,12 +415,9 @@ public class ValeSalida {
 //        String fecha = anioMes.format(dateF);
 //        log.info("estoy en:" + fecha);
         Map<String, Object> parametros = new HashMap<>();
-        // pasar los datos que faltan para el formato
         parametros.put("logoImss", "");
         parametros.put("logoSistema", "");
-        // todo - ver que se le pasa la condicion o si ya no es necesario pasar este parametro
 //        private Long idOoad;
-        // todo - recuperar el nombre de la delegacion
 //        parametros.put("idOoad", reporteDto.getIdOoad());
 //        parametros.put("idVelatorio", reporteDto.getIdVelatorio());
         parametros.put("nombreDelegacion", reporteDto.getNombreDelegacion());
@@ -458,12 +450,41 @@ public class ValeSalida {
         return parametros;
     }
 
-    // generar el formato, ver si se usa la consulta del detalle del vale de salida
+    /**
+     * Realiza el borrado l&oacute;gico de un registro de Vale de Salida.
+     *
+     * @param idValeSalida
+     * @return
+     */
+    public DatosRequest cambiarEstatus(Long idValeSalida) {
+        StringBuilder queryBuilder = new StringBuilder("UPDATE SVT_VALE_SALIDA ");
+        queryBuilder.append("SET CVE_ESTATUS = false ")
+                .append("WHERE ID_VALE_SALIDA = ").append(idValeSalida);
+        String query = queryBuilder.toString();
+        Map<String, Object> parametros = new HashMap<>();
+        parametros.put(AppConstantes.QUERY, getBinary(query));
+        final DatosRequest datos = new DatosRequest();
+        datos.setDatos(parametros);
 
+        return datos;
+    }
+
+    /**
+     * Recupera la cadena encriptada del query generado.
+     *
+     * @param query
+     * @return
+     */
     private static String getBinary(String query) {
         return DatatypeConverter.printBase64Binary(query.getBytes());
     }
 
+    /**
+     * Recuperar el query cuando se usa la clase: <b>{@code SelectQueryUtil}</b>
+     *
+     * @param queryUtil
+     * @return
+     */
     private static String getQuery(SelectQueryUtil queryUtil) {
         return queryUtil.build();
     }

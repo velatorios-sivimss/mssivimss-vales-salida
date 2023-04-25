@@ -7,6 +7,7 @@ import lombok.Getter;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ValeSalidaResponse {
     private Long idValeSalida;
+    private String folioValeSalida;
     private Long idVelatorio;
     private String nombreVelatorio;
     private String nombreDelegacion;

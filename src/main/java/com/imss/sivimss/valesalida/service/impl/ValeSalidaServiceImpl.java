@@ -22,10 +22,8 @@ import java.util.*;
 @Service
 @Slf4j
 public class ValeSalidaServiceImpl implements ValeSalidaService {
-    // todo - agregar las contantes para recuperar los mensajes y pasarlos al front
-    //    MSG005	Error al guardar la información. Intenta nuevamente.
+    private static final String MSG_ERROR_REGISTRAR = "5";
     private static final String SIN_INFORMACION = "87";//No contamos con capillas disponibles por el momento. Intenta mas tarde.
-    //    MSG016	Este campo es obligatorio *.
     //    MSG020	La fecha inicial no puede ser mayor que la fecha final.
     private final static String MSG_VALIDACION_FECHAS = "20";
     //    MSG022	Selecciona por favor un criterio de búsqueda.
@@ -75,31 +73,33 @@ public class ValeSalidaServiceImpl implements ValeSalidaService {
 
     @Override
     public Response<?> crearVale(DatosRequest request, Authentication authentication) throws IOException {
-
+        Response<?> response = null;
         try {
-
             ValeSalidaDto valeSalidaRequest = gson.fromJson(
                     String.valueOf(request.getDatos().get(AppConstantes.DATOS)),
                     ValeSalidaDto.class
             );
             UsuarioDto usuarioDto = gson.fromJson((String) authentication.getPrincipal(), UsuarioDto.class);
             final DatosRequest datosRequest = valeSalida.crearVale(valeSalidaRequest, usuarioDto);
-            Response<?> response = restTemplate.consumirServicio(
+            response = restTemplate.consumirServicio(
                     datosRequest.getDatos(),
                     URL_DOMINIO_INSERTAR_MULTIPLE,
                     authentication
             );
             if (response.getCodigo() != 200) {
                 // todo - ver como manejar las transacciones por si falla en algun punto, porque no quedaria cuadrado el inventario
-                // todo - ver que se se recupera del registro anterior, para ver si se puede borrar todo alv
-                return MensajeResponseUtil.mensajeResponse(response, "Error al insertar el registro");
+                return MensajeResponseUtil.mensajeResponse(response, MSG_ERROR_REGISTRAR);
             }
             actualizarInventario(valeSalidaRequest.getArticulos(), true, authentication);
             return MensajeResponseUtil.mensajeResponse(response, MSG131_REGISTRO_SALIDA_OK);
         } catch (Exception ex) {
+            response = new Response<>();
+            response.setCodigo(HttpStatus.INTERNAL_SERVER_ERROR.value());
             // todo - manejar la excepcion
             log.error("Ha ocurrido un error al crear el vale de salida");
-            throw ex;
+            return MensajeResponseUtil.mensajeResponse(
+                    response,
+                    MSG_ERROR_REGISTRAR);
         }
     }
 
@@ -134,8 +134,9 @@ public class ValeSalidaServiceImpl implements ValeSalidaService {
             Long idValeSalida = gson.fromJson(
                     String.valueOf(request.getDatos().get("palabra")),
                     Long.class);
+            UsuarioDto usuarioDto = gson.fromJson((String) authentication.getPrincipal(), UsuarioDto.class);
 
-            DatosRequest datosRequest = valeSalida.consultar(idValeSalida);
+            DatosRequest datosRequest = valeSalida.consultar(idValeSalida, usuarioDto.getIdDelegacion());
 
             final Response<?> response = restTemplate.consumirServicio(datosRequest.getDatos(),
                     URL_DOMINIO_CONSULTA,
@@ -164,20 +165,27 @@ public class ValeSalidaServiceImpl implements ValeSalidaService {
 
     @Override
     public Response<?> consultarDatosPantallaRegistro(DatosRequest request, Authentication authentication) throws IOException {
-        // todo - recuperar el folio de la ods y consultar los datos del contratante, finado y direccion
+        // siempre deben de llegar el folio, la delegacion y el velatorio
+
         // todo - se va a usar para ver si tiene el nivel necesario para poder realizar la consulta
+        // hay que recuperar la delegacion del usuario para hacer la consulta
         UsuarioDto usuarioDto = gson.fromJson((String) authentication.getPrincipal(), UsuarioDto.class);
+        // todo - retomar la validacion del nivel del usuario para que no se puedan hacer consultas que no correspondan
+        // buscar los id de los roles que correspondan para el caso de uso
         // validarNivelUsuario(usuarioDto);
+
         ConsultaDatosPantallaRequest valeSalidaRequest = gson.fromJson(
                 String.valueOf(request.getDatos().get(AppConstantes.DATOS)),
                 ConsultaDatosPantallaRequest.class
         );
+        // todo - validar que los datos no sean nulos para la consulta
         final DatosRequest datosRequest = valeSalida.consultarDatosOds(valeSalidaRequest);
         final Response<?> response = restTemplate.consumirServicio(
                 datosRequest.getDatos(),
                 URL_DOMINIO_CONSULTA,
                 authentication
         );
+        // todo hacer la validacion cuando se regresa algo vacio o sin datos
         return getValidacionResponse(response);
     }
 
@@ -193,26 +201,27 @@ public class ValeSalidaServiceImpl implements ValeSalidaService {
         return respuesta;
     }
 
-    private void consultarArticulosInventario(long idVelatorio, Authentication authentication) throws IOException {
-        final DatosRequest datosRequest = valeSalida.consultarProductos(idVelatorio);
-        restTemplate.consumirServicio(
-                datosRequest.getDatos(),
-                URL_DOMINIO_CONSULTA,
-                authentication
-        );
-
-    }
+//    private void consultarArticulosInventario(long idVelatorio, Authentication authentication) throws IOException {
+//        final DatosRequest datosRequest = valeSalida.consultarProductos(idVelatorio);
+//        restTemplate.consumirServicio(
+//                datosRequest.getDatos(),
+//                URL_DOMINIO_CONSULTA,
+//                authentication
+//        );
+//
+//    }
 
     @Override
-    public Response<?> modificarVale(DatosRequest request, Authentication authentication) {
+    public Response<?> modificarVale(DatosRequest request, Authentication authentication) throws IOException {
         ValeSalidaDto valeSalidaDto = getValeSalida(request.getDatos());
         // pasar los datos que llegan en el dto para guardar los datos
         // iterar
+        eliminarDetalleValeSalida(valeSalidaDto.getIdValeSalida(), authentication);
         // todo - consultar el vale
-        valeSalida.modificarVale(valeSalidaDto, false);
+        final DatosRequest datosRequest = valeSalida.modificarVale(valeSalidaDto, false);
+        restTemplate
 //        DatosRequest datosRequest = valeSalida.modificarVale()
         // todo - vamos a mandar a llamar al servicio para eliminar articulos de tabla detalle
-        eliminarDetalleValeSalida(valeSalidaDto.getIdValeSalida());
         // todo - actualizar el vale_salida
         // todo - registrar los nuevos articulos
         // hacer un for con las peticiones para guardar los articulos y lo del inventario
@@ -221,25 +230,41 @@ public class ValeSalidaServiceImpl implements ValeSalidaService {
     }
 
     @Override
-    public Response<?> registrarEntrada(DatosRequest request, Authentication authentication) {
+    public Response<?> registrarEntrada(DatosRequest request, Authentication authentication) throws IOException {
         ValeSalidaDto valeSalidaDto = getValeSalida(request.getDatos());
         valeSalida.modificarVale(valeSalidaDto, true);
-        eliminarDetalleValeSalida(valeSalidaDto.getIdValeSalida());
-
+        eliminarDetalleValeSalida(valeSalidaDto.getIdValeSalida(), authentication);
+        actualizarInventario(valeSalidaDto.getArticulos(), false, authentication);
         return null;
     }
 
     @Override
     public Response<?> cambiarEstatus(DatosRequest request, Authentication authentication) {
+        ValeSalidaDto valeSalidaDto = getValeSalida(request.getDatos());
         // todo - cambiar los estatus de los articulos del vale
-//        valeSalida.cambiarEstatus()
+        final DatosRequest datosRequest = valeSalida.cambiarEstatus(valeSalidaDto.getIdValeSalida());
+        restTemplate
         // todo - sumar en el inventario la cantidad de articulos
         // todo - apagar el vale_salida
         return null;
     }
 
-    private void eliminarDetalleValeSalida(Long idValeSalida) {
-        final DatosRequest datosRequest = valeSalida.eliminarProductosVale(idValeSalida);
+    /**
+     * todo - agregar documentacion
+     *
+     * @param idValeSalida
+     * @param authentication
+     * @throws IOException
+     */
+    private void eliminarDetalleValeSalida(Long idValeSalida, Authentication authentication) throws IOException {
+        final DatosRequest datosRequest = valeSalida.eliminarArticulosValeSalida(idValeSalida);
+        final Response<?> response = restTemplate.consumirServicio(datosRequest.getDatos(),
+                URL_DOMINIO_ACTUALIZAR,
+                authentication);
+        if (response.getCodigo() != 200) {
+            // todo - agregar el error adecuadamente
+            throw new BadRequestException(HttpStatus.INTERNAL_SERVER_ERROR, "Error al eliminar los articulos relacionados");
+        }
         // no se puede eliminar de la base de datos, por lo que hay que agregar un campo que sea cve_estatus
         // este campo se va actualizar cuando se tenga que borrar el registro y agregar otro
         // se va a usar el id_inventario para este proceso
@@ -381,33 +406,31 @@ public class ValeSalidaServiceImpl implements ValeSalidaService {
             if (resultado == null) {
                 resultado = new ValeSalidaDto();
                 resultado.setIdValeSalida(valeSalidaResponse.getIdValeSalida());
-//                private String folioValeSalida;
-//                resultado.setFolioValeSalida(valeSalidaResponse.getFolioValeSalida());
+                resultado.setFolioValeSalida(valeSalidaResponse.getFolioValeSalida());
                 resultado.setIdVelatorio(valeSalidaResponse.getIdVelatorio());
                 resultado.setNombreVelatorio(valeSalidaResponse.getNombreVelatorio());
                 resultado.setNombreDelegacion(valeSalidaResponse.getNombreDelegacion());
                 resultado.setIdOds(valeSalidaResponse.getIdOds());
                 resultado.setFolioOds(valeSalidaResponse.getFolioOds());
 
-                // todo - estos id's no se van a usar
-//                private Long idContratante;
-//                resultado.setIdContratante(valeSalidaResponse.getcontra);
-//                private Long idFinado;
-//                private String nombreFinado;
-
                 resultado.setNombreContratante(valeSalidaResponse.getNombreContratante());
                 resultado.setNombreFinado(valeSalidaResponse.getNombreFinado());
+
                 resultado.setNombreResponsableInstalacion(valeSalidaResponse.getNombreResponsableInstalacion());
                 resultado.setMatriculaResponsableInstalacion(valeSalidaResponse.getMatriculaResponsableInstalacion());
                 resultado.setMatriculaResponsableEntrega(valeSalidaResponse.getMatriculaResponsableEntrega());
                 resultado.setNombreResponsableEntrega(valeSalidaResponse.getMatriculaResponsableEntrega());
                 resultado.setMatriculaResponsableEquipoVelacion(valeSalidaResponse.getMatriculaResponsableEquipo());
                 resultado.setNombreResponsableEquipoVelacion(valeSalidaResponse.getNombreResponsableEquipo());
+
                 resultado.setDiasNovenario(valeSalidaResponse.getDiasNovenario());
+
                 resultado.setFechaSalida(valeSalidaResponse.getFechaSalida());
                 resultado.setFechaEntrada(valeSalidaResponse.getFechaEntrada());
+
                 resultado.setCantidadArticulos(valeSalidaResponse.getTotalArticulos());
                 // todo - agregar la direccion
+
             }
 
             DetalleValeSalidaRequest detalleArticulo = new DetalleValeSalidaRequest();
