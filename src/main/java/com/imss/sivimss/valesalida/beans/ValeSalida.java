@@ -69,7 +69,7 @@ public class ValeSalida {
                         "dvs.DES_OBSERVACION as observaciones")
                 .from("SVT_VALE_SALIDA vs")
                 .join("SVC_VELATORIO v", "vs.ID_VELATORIO = v.ID_VELATORIO")
-                .join("svc_delegacion d", "d.id_delegacion = :idDelegacion")
+                .join("SVC_DELEGACION d", "d.ID_DELEGACION = :idDelegacion")
                 .join("SVC_ORDEN_SERVICIO ods", "vs.ID_ORDEN_SERVICIO = ods.ID_ORDEN_SERVICIO")
                 .join("SVC_FINADO usuFinado", "v.ID_VELATORIO = usuFinado.ID_VELATORIO", "usuFinado.ID_ORDEN_SERVICIO = ods.ID_ORDEN_SERVICIO")
                 .join("SVC_PERSONA perFinado", "usuFinado.ID_PERSONA = perFinado.ID_PERSONA")
@@ -269,6 +269,7 @@ public class ValeSalida {
     public DatosRequest crearVale(ValeSalidaDto valeSalida, UsuarioDto usuarioDto) {
         DatosRequest datos = new DatosRequest();
         Map<String, Object> parametros = new HashMap<>();
+
         QueryHelper queryHelper = new QueryHelper("INSERT INTO SVT_VALE_SALIDA");
         queryHelper.agregarParametroValues("ID_VELATORIO", String.valueOf(valeSalida.getIdVelatorio()));
         // todo - como se va a crear el folio del vale de salida
@@ -282,13 +283,15 @@ public class ValeSalida {
         queryHelper.agregarParametroValues("NOM_RESPEQUIVELACION", "'" + String.valueOf(valeSalida.getNombreResponsableEquipoVelacion()) + "'");
         queryHelper.agregarParametroValues("CVE_MATRICULARESPEQUIVELACION", "'" + String.valueOf(valeSalida.getMatriculaResponsableEquipoVelacion()) + "'");
 
+        // voy a tener que calcular este valor
         queryHelper.agregarParametroValues("CAN_ARTICULOS", String.valueOf(valeSalida.getCantidadArticulos()));
-        queryHelper.agregarParametroValues("CVE_ESTATUS", "1");
 
+        queryHelper.agregarParametroValues("CVE_ESTATUS", "1");
         queryHelper.agregarParametroValues("ID_USUARIO_ALTA", String.valueOf(usuarioDto.getIdUsuario()));
         queryHelper.agregarParametroValues("FEC_ALTA", "CURRENT_TIMESTAMP");
 
         final List<DetalleValeSalidaRequest> articulos = valeSalida.getArticulos();
+
         // todo - mover esta validacon al servicio
         if (articulos.isEmpty()) {
             // todo - recuperar el mensaje del catalogo

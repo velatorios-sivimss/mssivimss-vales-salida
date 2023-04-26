@@ -2,6 +2,7 @@ package com.imss.sivimss.valesalida.controller;
 
 import com.imss.sivimss.valesalida.service.ValeSalidaService;
 import com.imss.sivimss.valesalida.util.DatosRequest;
+import com.imss.sivimss.valesalida.util.LogUtil;
 import com.imss.sivimss.valesalida.util.ProviderServiceRestTemplate;
 import com.imss.sivimss.valesalida.util.Response;
 import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
@@ -19,6 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.io.IOException;
 import java.text.ParseException;
 import java.util.concurrent.CompletableFuture;
+import java.util.logging.Level;
 
 /**
  * Controller con los endpoints para administrar los vales de salida
@@ -31,10 +33,17 @@ public class ValeSalidaController {
 
     private final ValeSalidaService valeSalidaService;
     private final ProviderServiceRestTemplate restTemplate;
+    private final LogUtil logUtil;
+    private static final String ALTA = "alta";
+    private static final String BAJA = "baja";
+    private static final String MODIFICACION = "modificacion";
+    private static final String CONSULTA = "consulta";
 
-    public ValeSalidaController(ValeSalidaService valeSalidaService, ProviderServiceRestTemplate restTemplate) {
+
+    public ValeSalidaController(ValeSalidaService valeSalidaService, ProviderServiceRestTemplate restTemplate, LogUtil logUtil) {
         this.valeSalidaService = valeSalidaService;
         this.restTemplate = restTemplate;
+        this.logUtil = logUtil;
     }
 
     @CircuitBreaker(name = "msflujo", fallbackMethod = "fallbackGenerico")
@@ -141,6 +150,7 @@ public class ValeSalidaController {
     private CompletableFuture<?> fallbackGenerico(@RequestBody DatosRequest request, Authentication authentication,
                                                   CallNotPermittedException e) {
         Response<?> response = restTemplate.respuestaProvider(e.getMessage());
+//        logUtil.crearArchivoLog(Level.INFO.toString(), );
         return CompletableFuture
                 .supplyAsync(() -> new ResponseEntity<>(response, HttpStatus.valueOf(response.getCodigo())));
     }

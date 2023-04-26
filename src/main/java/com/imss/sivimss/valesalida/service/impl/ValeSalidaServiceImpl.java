@@ -219,7 +219,7 @@ public class ValeSalidaServiceImpl implements ValeSalidaService {
         eliminarDetalleValeSalida(valeSalidaDto.getIdValeSalida(), authentication);
         // todo - consultar el vale
         final DatosRequest datosRequest = valeSalida.modificarVale(valeSalidaDto, false);
-        restTemplate
+//        restTemplate
 //        DatosRequest datosRequest = valeSalida.modificarVale()
         // todo - vamos a mandar a llamar al servicio para eliminar articulos de tabla detalle
         // todo - actualizar el vale_salida
@@ -243,7 +243,7 @@ public class ValeSalidaServiceImpl implements ValeSalidaService {
         ValeSalidaDto valeSalidaDto = getValeSalida(request.getDatos());
         // todo - cambiar los estatus de los articulos del vale
         final DatosRequest datosRequest = valeSalida.cambiarEstatus(valeSalidaDto.getIdValeSalida());
-        restTemplate
+//        restTemplate
         // todo - sumar en el inventario la cantidad de articulos
         // todo - apagar el vale_salida
         return null;

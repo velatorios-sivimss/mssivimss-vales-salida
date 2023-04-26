@@ -75,3 +75,5 @@ resilience4j.timelimiter:
         
         
 formato_fecha: '%d/%m/%Y'
+
+ruta-log: C:\Users\esanvicente\Desktop\tmp\sivimss\logs
