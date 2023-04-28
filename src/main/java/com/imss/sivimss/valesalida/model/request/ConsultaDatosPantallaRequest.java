@@ -5,5 +5,6 @@ import lombok.Getter;
 @Getter
 public class ConsultaDatosPantallaRequest {
     private String folioOds;
+    private Long idDelegacion;
     private Long idVelatorio;
 }

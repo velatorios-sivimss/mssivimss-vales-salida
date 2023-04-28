@@ -538,7 +538,6 @@ public class SelectQueryUtil {
                 stringBuilder.append(join.getTipo());
                 stringBuilder.append(SPACE);
                 stringBuilder.append(join.getTabla());
-                stringBuilder.append(SPACE).append(ON).append(SPACE);
                 agregarCondicionesJoin(stringBuilder, join);
             }
         }
@@ -554,6 +553,7 @@ public class SelectQueryUtil {
     private void agregarCondicionesJoin(StringBuilder stringBuilder, Join join) {
         final List<String> condicionesTemp = join.getOn();
         if (!condicionesTemp.isEmpty()) {
+            stringBuilder.append(SPACE).append(ON).append(SPACE);
             for (int index = 0; index < condicionesTemp.size(); index++) {
                 String condicion = condicionesTemp.get(index);
                 agregarParametros(stringBuilder, index, condicion, condicionesTemp);

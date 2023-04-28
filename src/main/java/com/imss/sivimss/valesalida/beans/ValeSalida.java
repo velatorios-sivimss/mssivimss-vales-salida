@@ -57,14 +57,15 @@ public class ValeSalida {
                         "vs.CVE_MATRICULARESPEQUIVELACION as matriculaResponsableEquipo",
                         "vs.CAN_ARTICULOS as totalArticulos",
                         // todo - refactor, hay que cambiar de donde sale la direccion
-                        "infoOds.DES_CALLE as calle",
-                        "infoOds.NUM_EXTERIOR as numExt",
-                        "infoOds.NUM_INTERIOR as numInt",
-                        "infoOds.DES_COLONIA as colonia",
+                        "domicilio.DES_CALLE as calle",
+                        "domicilio.NUM_EXTERIOR as numExt",
+                        "domicilio.NUM_INTERIOR as numInt",
+                        "domicilio.DES_COLONIA as colonia",
                         "cp.DES_ESTADO as estado",
                         "cp.DES_MNPIO as municipio",
                         "cp.CVE_CODIGO_POSTAL as codigoPostal",
-                        "dvs.ID_ARTICULO as idArticulo",
+                        "dvs.ID_INVE_ARTICULO as idArticulo",
+                        "inventario.DES_ARTICULO as nombreArticulo",
                         "dvs.CAN_ARTICULOS as cantidadArticulos",
                         "dvs.DES_OBSERVACION as observaciones")
                 .from("SVT_VALE_SALIDA vs")
@@ -77,8 +78,10 @@ public class ValeSalida {
                 .join("SVC_PERSONA perContratante", "usuContratante.ID_PERSONA = perContratante.ID_PERSONA")
                 .join("SVC_INFORMACION_SERVICIO infoServ", "infoServ.ID_ORDEN_SERVICIO = ods.ID_ORDEN_SERVICIO")
                 .join("SVC_INFORMACION_SERVICIO_VELACION infoOds", "infoOds.ID_INFORMACION_SERVICIO = infoServ.ID_INFORMACION_SERVICIO")
-                .join("SVC_CP cp", "cp.ID_CODIGO_POSTAL = infoOds.ID_CP")
-                .leftJoin("SVT_VALE_SALIDADETALLE dvs", "dvs.ID_VALESALIDA = vs.ID_VALESALIDA");
+                .join("SVT_DOMICILIO domicilio", "domicilio.ID_DOMICILIO = infoOds.ID_DOMICILIO")
+                .join("SVC_CP cp", "cp.ID_CODIGO_POSTAL = domicilio.ID_CP")
+                .leftJoin("SVT_VALE_SALIDADETALLE dvs", "dvs.ID_VALESALIDA = vs.ID_VALESALIDA", "dvs.IND_ACTIVO = 1")
+                .join("SVT_INVENTARIO inventario", "dvs.ID_INVE_ARTICULO = inventario.ID_INVENTARIO");
         queryUtil.where("vs.ID_VALESALIDA = :idValeSalida")
                 .setParameter("idValeSalida", id)
                 .setParameter("idDelegacion", idDelegacion);
@@ -120,8 +123,9 @@ public class ValeSalida {
      * @param idValeSalida
      * @return
      */
-    public DatosRequest eliminarArticulosValeSalida(Long idValeSalida) {
-        String query = "UPDATE SVT_VALE_SALIDADETALLE set CVE_ESTATUS = false WHERE ID_VALESALIDA = " + idValeSalida;
+    public DatosRequest cambiarEstatusDetalleValeSalida(Long idValeSalida, int estatus) {
+
+        String query = "UPDATE SVT_VALE_SALIDADETALLE set CVE_ESTATUS = " + estatus + " WHERE ID_VALESALIDA = " + idValeSalida + " and cve_estatus = 1";
 
         Map<String, Object> parametros = new HashMap<>();
         DatosRequest datos = new DatosRequest();
@@ -199,42 +203,53 @@ public class ValeSalida {
      * @return
      */
     public DatosRequest consultarDatosOds(ConsultaDatosPantallaRequest request) {
-        // todo - probar los cambios
-
         // todo - validar que los campos no sean nulos
         SelectQueryUtil queryUtil = new SelectQueryUtil();
-        queryUtil.select("v.ID_VELATORIO as idVelatorio",
+        queryUtil.select(
+                        "v.ID_VELATORIO as idVelatorio",
                         "v.NOM_VELATORIO as nombreVelatorio",
                         "d.DES_DELEGACION as nombreDelegacion",
                         "ods.ID_ORDEN_SERVICIO as idOds",
                         "ods.CVE_FOLIO as request",
                         "perContratante.NOM_PERSONA as nombreContratante",
                         "perFinado.NOM_PERSONA as nombreFinado",
-                        "infoOds.DES_CALLE as calle",
-                        "infoOds.NUM_EXTERIOR as numExt",
-                        "infoOds.NUM_INTERIOR as numInt",
-                        "infoOds.DES_COLONIA as colonia",
+                        "domicilio.DES_CALLE as calle",
+                        "domicilio.NUM_EXTERIOR as numExt",
+                        "domicilio.NUM_INTERIOR as numInt",
+                        "domicilio.DES_COLONIA as colonia",
                         "cp.DES_ESTADO as estado",
                         "cp.DES_MNPIO as municipio",
                         "cp.CVE_CODIGO_POSTAL as codigoPostal",
                         "inventario.ID_INVENTARIO as idArticulo",
+                        "inventario.NOM_ARTICULO as nombreArticulo",
                         "inventario.CAN_STOCK as cantidadArticulos")
                 .from("SVC_ORDEN_SERVICIO ods")
-                .join("SVC_VELATORIO v", "v.ID_VELATORIO = :idVelatorio")
-                .join("SVC_DELEGACION d", "d.ID_DELEGACION = v.ID_DELEGACION")
-                .join("SVC_FINADO usuFinado", "v.ID_VELATORIO = usuFinado.ID_VELATORIO", "usuFinado.ID_ORDEN_SERVICIO = ods.ID_ORDEN_SERVICIO")
+                .join("SVC_VELATORIO v")
+//                .join("SVC_DELEGACION d", "d.ID_DELEGACION = v.ID_DELEGACION")
+                .join("SVC_DELEGACION d")
+                .join("SVC_FINADO usuFinado",
+                        "v.ID_VELATORIO = usuFinado.ID_VELATORIO",
+                        "usuFinado.ID_ORDEN_SERVICIO = ods.ID_ORDEN_SERVICIO")
                 .join("SVC_PERSONA perFinado", "usuFinado.ID_PERSONA = perFinado.ID_PERSONA")
                 .join("SVC_CONTRATANTE usuContratante", "ods.ID_CONTRATANTE = usuContratante.ID_CONTRATANTE")
                 .join("SVC_PERSONA perContratante", "usuContratante.ID_PERSONA = perContratante.ID_PERSONA")
                 .join("SVC_INFORMACION_SERVICIO infoServ", "infoServ.ID_ORDEN_SERVICIO = ods.ID_ORDEN_SERVICIO")
-                .join("SVC_INFORMACION_SERVICIO_VELACION infoOds", "infoOds.ID_INFORMACION_SERVICIO = infoServ.ID_INFORMACION_SERVICIO")
-                .join("SVC_CP cp", "cp.ID_CODIGO_POSTAL = infoOds.ID_CP")
-                .leftJoin("SVT_INVENTARIO inventario", "inventario.ID_VELATORIO = v.ID_VELATORIO",
+                .join("SVC_INFORMACION_SERVICIO_VELACION infoOds",
+                        "infoOds.ID_INFORMACION_SERVICIO = infoServ.ID_INFORMACION_SERVICIO")
+                .join("SVT_DOMICILIO domicilio", "domicilio.ID_DOMICILIO = infoOds.ID_DOMICILIO")
+                .join("SVC_CP cp", "cp.ID_CODIGO_POSTAL = domicilio.ID_CP")
+                .join("SVT_INVENTARIO inventario",
+                        "inventario.ID_VELATORIO = v.ID_VELATORIO",
                         "inventario.ID_TIPO_SERVICIO = 2");
 
-        queryUtil.where("ods.CVE_FOLIO = :folioOds")
+        queryUtil.where(
+                        "ods.CVE_FOLIO = :folioOds",
+                        "d.id_delegacion = :idDelegacion",
+                        "v.ID_VELATORIO = :idVelatorio")
                 .setParameter("folioOds", request.getFolioOds())
+                .setParameter("idDelegacion", request.getIdDelegacion())
                 .setParameter("idVelatorio", request.getIdVelatorio());
+
         return getDatosRequest(queryUtil);
     }
 
@@ -297,7 +312,7 @@ public class ValeSalida {
             // todo - recuperar el mensaje del catalogo
             throw new BadRequestException(HttpStatus.BAD_REQUEST, "La lista de articulos no puede estar vacia");
         }
-        String queriesArticulos = crearDetalleVale(articulos);
+        String queriesArticulos = crearDetalleVale(articulos, null);
         String query = queryHelper.obtenerQueryInsertar() + queriesArticulos;
         parametros.put(AppConstantes.QUERY, getBinary(query));
         parametros.put("separador", "$$");
@@ -313,17 +328,47 @@ public class ValeSalida {
      * @param articulos
      * @return
      */
-    private String crearDetalleVale(List<DetalleValeSalidaRequest> articulos) {
+    private String crearDetalleVale(List<DetalleValeSalidaRequest> articulos, Long idValeSalida) {
         StringBuilder query = new StringBuilder();
         for (DetalleValeSalidaRequest detalleValeSalida : articulos) {
             QueryHelper queryHelper = new QueryHelper("INSERT INTO SVT_VALE_SALIDADETALLE");
-            queryHelper.agregarParametroValues("ID_VALESALIDA", "idTabla");
+            final boolean isIdValeSalida = idValeSalida != null;
+            queryHelper.agregarParametroValues("ID_VALESALIDA", isIdValeSalida ? String.valueOf(idValeSalida) : "idTabla");
+            queryHelper.agregarParametroValues("ID_ARTICULO", String.valueOf(detalleValeSalida.getIdInventario()));
+            queryHelper.agregarParametroValues("CAN_ARTICULOS", String.valueOf(detalleValeSalida.getCantidad()));
+            queryHelper.agregarParametroValues("DES_OBSERVACION", "'" + detalleValeSalida.getObservaciones() + "'");
+            queryHelper.agregarParametroValues("CVE_ESTATUS", "1");
+            if (!isIdValeSalida) {
+                query.append(" $$ ").append(queryHelper.obtenerQueryInsertar());
+            }
+        }
+        return query.toString();
+    }
+
+    public DatosRequest actualizarDetalleVale(List<DetalleValeSalidaRequest> articulos, Long idValeSalida) {
+        StringBuilder query = new StringBuilder();
+        for (DetalleValeSalidaRequest detalleValeSalida : articulos) {
+            QueryHelper queryHelper = new QueryHelper("INSERT INTO SVT_VALE_SALIDADETALLE");
+            queryHelper.agregarParametroValues("ID_VALESALIDA", idValeSalida != null ? String.valueOf(idValeSalida) : "idTabla");
             queryHelper.agregarParametroValues("ID_ARTICULO", String.valueOf(detalleValeSalida.getIdInventario()));
             queryHelper.agregarParametroValues("CAN_ARTICULOS", String.valueOf(detalleValeSalida.getCantidad()));
             queryHelper.agregarParametroValues("DES_OBSERVACION", "'" + detalleValeSalida.getObservaciones() + "'");
             query.append(" $$ ").append(queryHelper.obtenerQueryInsertar());
         }
-        return query.toString();
+        final DatosRequest datosRequest = new DatosRequest();
+        return datosRequest;
+    }
+
+    public List<String> generarQueries(String... queries) {
+        // todo - hay que pasar el arrya a una lista
+
+        Map<String, Object> parametros = new HashMap<>();
+        final List<String> updates = Arrays.asList(queries);
+        parametros.put("updates", updates.stream().map(ValeSalida::getBinary));
+
+        final DatosRequest datosRequest = new DatosRequest();
+        // regresar la un dto con un parametro que sea la lista de updates
+        return updates;
     }
 
     /**
@@ -348,6 +393,10 @@ public class ValeSalida {
             // todo - verificar que los nombres y matricula sean correctos, verificar que solo sean esos datos los que se van a estar guardando
             queryHelper.agregarParametroValues("NOM_RESPONSABLE", "'" + String.valueOf(valeSalida.getCantidadArticulos()) + "'");
             queryHelper.agregarParametroValues("CVE_MATRICULA_RESPONSABLE", "'" + valeSalida.getCantidadArticulos() + "'");
+            // fecha actualizacion
+            // usuario que modifica
+
+            // modificar tambien el detalle
         }
 
         String query = queryHelper.obtenerQueryActualizar();
@@ -377,7 +426,27 @@ public class ValeSalida {
                 .append("WHERE ID_INVENTARIO = ")
                 .append(articulo.getIdInventario());
 
-        final String query = updateQuery.toString();
+        return getDatosRequest(updateQuery.toString());
+    }
+
+    /**
+     * @param articulo
+     * @param estatus
+     * @return
+     */
+    public DatosRequest actualizarDetalleValeSalida(Long idValeSalida, DetalleValeSalidaRequest articulo, int estatus) {
+        QueryHelper queryHelper = new QueryHelper("INSERT INTO SVT_VALE_SALIDADETALLE");
+        queryHelper.agregarParametroValues("ID_VALESALIDA", String.valueOf(idValeSalida));
+        queryHelper.agregarParametroValues("ID_ARTICULO", String.valueOf(articulo.getIdInventario()));
+        queryHelper.agregarParametroValues("CAN_ARTICULOS", String.valueOf(articulo.getCantidad()));
+        queryHelper.agregarParametroValues("DES_OBSERVACION", "'" + articulo.getObservaciones() + "'");
+        queryHelper.agregarParametroValues("cve_estatus", String.valueOf(articulo.getObservaciones()));
+
+        return getDatosRequest(queryHelper.toString());
+    }
+
+    private DatosRequest getDatosRequest(String string) {
+        final String query = string;
         DatosRequest datos = new DatosRequest();
         Map<String, Object> parametros = new HashMap<>();
         parametros.put(AppConstantes.QUERY, getBinary(query));

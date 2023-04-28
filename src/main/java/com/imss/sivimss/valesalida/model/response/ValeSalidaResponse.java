@@ -35,4 +35,15 @@ public class ValeSalidaResponse {
     private Long idArticulo;
     private Integer cantidadArticulos;
     private String observaciones;
+
+    /**
+     * Recupera el domicilio en una sola cadena
+     *
+     * @return
+     */
+    public String recuperarDomicilio() {
+        return calle + " " +
+                numExt + (numInt.isEmpty() ? " " : numInt + " ") + " " +
+                colonia + ", " + municipio + ", " + estado + ", " + codigoPostal;
+    }
 }
