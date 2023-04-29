@@ -33,6 +33,7 @@ public class ValeSalidaResponse {
     private String municipio;
     private String codigoPostal;
     private Long idArticulo;
+    private String nombreArticulo;
     private Integer cantidadArticulos;
     private String observaciones;
 

@@ -301,7 +301,7 @@ public class ValeSalida {
         // voy a tener que calcular este valor
         queryHelper.agregarParametroValues("CAN_ARTICULOS", String.valueOf(valeSalida.getCantidadArticulos()));
 
-        queryHelper.agregarParametroValues("CVE_ESTATUS", "1");
+        queryHelper.agregarParametroValues("IND_ACTIVO", "1");
         queryHelper.agregarParametroValues("ID_USUARIO_ALTA", String.valueOf(usuarioDto.getIdUsuario()));
         queryHelper.agregarParametroValues("FEC_ALTA", "CURRENT_TIMESTAMP");
 
@@ -334,10 +334,10 @@ public class ValeSalida {
             QueryHelper queryHelper = new QueryHelper("INSERT INTO SVT_VALE_SALIDADETALLE");
             final boolean isIdValeSalida = idValeSalida != null;
             queryHelper.agregarParametroValues("ID_VALESALIDA", isIdValeSalida ? String.valueOf(idValeSalida) : "idTabla");
-            queryHelper.agregarParametroValues("ID_ARTICULO", String.valueOf(detalleValeSalida.getIdInventario()));
+            queryHelper.agregarParametroValues("ID_INVE_ARTICULO", String.valueOf(detalleValeSalida.getIdInventario()));
             queryHelper.agregarParametroValues("CAN_ARTICULOS", String.valueOf(detalleValeSalida.getCantidad()));
             queryHelper.agregarParametroValues("DES_OBSERVACION", "'" + detalleValeSalida.getObservaciones() + "'");
-            queryHelper.agregarParametroValues("CVE_ESTATUS", "1");
+            queryHelper.agregarParametroValues("IND_ACTIVO", "1");
             if (!isIdValeSalida) {
                 query.append(" $$ ").append(queryHelper.obtenerQueryInsertar());
             }

@@ -156,7 +156,7 @@ public class ValeSalidaServiceImpl implements ValeSalidaService {
 
         // todo - se va a usar para ver si tiene el nivel necesario para poder realizar la consulta
         // hay que recuperar la delegacion del usuario para hacer la consulta
-        UsuarioDto usuarioDto = gson.fromJson((String) authentication.getPrincipal(), UsuarioDto.class);
+//        UsuarioDto usuarioDto = gson.fromJson((String) authentication.getPrincipal(), UsuarioDto.class);
         // todo - retomar la validacion del nivel del usuario para que no se puedan hacer consultas que no correspondan
         // buscar los id de los roles que correspondan para el caso de uso
         // validarNivelUsuario(usuarioDto);
@@ -465,6 +465,7 @@ public class ValeSalidaServiceImpl implements ValeSalidaService {
 
             DetalleValeSalidaRequest detalleArticulo = new DetalleValeSalidaRequest();
             detalleArticulo.setIdValeSalida(valeSalidaResponse.getIdValeSalida());
+            detalleArticulo.setNombreArticulo(valeSalidaResponse.getNombreArticulo());
             detalleArticulo.setIdInventario(valeSalidaResponse.getIdArticulo());
             detalleArticulo.setCantidad(valeSalidaResponse.getCantidadArticulos());
             detalleArticulo.setObservaciones(valeSalidaResponse.getObservaciones());
