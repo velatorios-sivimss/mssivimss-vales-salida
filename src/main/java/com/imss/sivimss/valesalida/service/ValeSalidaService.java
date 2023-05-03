@@ -17,7 +17,7 @@ public interface ValeSalidaService {
 
     Response<?> consultarDetalle(DatosRequest request, Authentication authentication) throws IOException;
 
-    Response<?> consultarDatosPantallaRegistro(DatosRequest request, Authentication authentication) throws IOException;
+    Response<?> consultarDatosPantallaRegistro(DatosRequest request, Authentication authentication) throws IOException, ParseException;
 
     Response<?> modificarVale(DatosRequest request, Authentication authentication) throws IOException;
 

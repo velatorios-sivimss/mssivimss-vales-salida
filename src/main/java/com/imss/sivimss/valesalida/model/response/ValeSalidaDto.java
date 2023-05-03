@@ -4,6 +4,7 @@ import com.imss.sivimss.valesalida.model.request.DetalleValeSalidaRequest;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.Date;
 import java.util.List;
 
 // todo - agregar los campos que le hagan falta al dto
@@ -38,6 +39,7 @@ public class ValeSalidaDto {
     private Integer diasNovenario;
     private String fechaSalida;
     private String fechaEntrada;
+    private Date fechaEntradaTmp;
 
     private Integer cantidadArticulos;
 
@@ -47,11 +49,12 @@ public class ValeSalidaDto {
     private String numInt;
     private String colonia;
     private String municipio;
+    private String estado;
     private String cp;
 
     private List<DetalleValeSalidaRequest> articulos;
 
     public String recuperarDomicilio() {
-        return calle + " " + numExt + numInt != null ? numInt + ", " : " " + colonia + ", " + municipio + ", " + cp;
+        return calle + " " + numExt + (numInt != null ? numInt + ", " : ", ") + colonia + ", " + municipio + ", " + estado + ", " + cp;
     }
 }

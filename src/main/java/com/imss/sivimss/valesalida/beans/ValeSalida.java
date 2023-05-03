@@ -14,6 +14,7 @@ import org.springframework.stereotype.Component;
 
 import javax.xml.bind.DatatypeConverter;
 import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 /**
@@ -489,6 +490,7 @@ public class ValeSalida {
         Map<String, Object> parametros = new HashMap<>();
         parametros.put("logoImss", "");
         parametros.put("logoSistema", "");
+        parametros.put("idValeSalida", reporteDto.getIdValeSalida());
 //        private Long idOoad;
 //        parametros.put("idOoad", reporteDto.getIdOoad());
 //        parametros.put("idVelatorio", reporteDto.getIdVelatorio());
@@ -497,24 +499,40 @@ public class ValeSalida {
         parametros.put("nombreVelatorio", reporteDto.getNombreVelatorio());
 //        private String nombreResponsableEntrega;
         parametros.put("nombreResponsableEntrega", reporteDto.getNombreResponsableEntrega());
+        parametros.put("matriculaResponsableEntrega", reporteDto.getMatriculaResponsableEntrega());
 //        private Integer diasNovenario;
         parametros.put("diasNovenario", reporteDto.getDiasNovenario());
 //        private String folioOds;
         parametros.put("folioOds", reporteDto.getFolioOds());
+        parametros.put("fechaSalida", reporteDto.getFechaSalida());
 //        private String fechaActual;
 //        parametros.put("fechaActual", )
 //        private String domicilio;
         parametros.put("domicilio", reporteDto.getDomicilio());
+        parametros.put("ciudad", reporteDto.getEstado());
 //        private String nombreResponsableInstalacion;
         parametros.put("nombreResponsableInstalacion", reporteDto.getNombreResponsableInstalacion());
+        parametros.put("matriculaResponsableInstalacion", reporteDto.getMatriculaResponsableInstalacion());
+        // pasar los datos para la consulta de la tabla de articulos
 //        private List<DetalleValeSalidaRequest> articulos;
-        parametros.put("articulos", reporteDto.getArticulos());
+        parametros.put("condition", "WHERE vsd.`ID_VALESALIDA` = " + reporteDto.getIdValeSalida() + " AND vsd.`IND_ACTIVO` = 1");
 //        private String nombreResponsableEquipo;
         parametros.put("nombreResponsableEquipo", reporteDto.getNombreResponsableEquipo());
-//        private String fechaEntrega;
+        parametros.put("matriculaResponsableEquipo", reporteDto.getMatriculaResponsableEquipo());
+
+        parametros.put("nombreContratante", reporteDto.getNombreContratante());
+
+        final SimpleDateFormat dateFormatter = new SimpleDateFormat("dd MMMM yyyy", new Locale("es", "MX"));
+        String fechaFormateada = dateFormatter.format(reporteDto.getFechaEntregaTmp());
+        String[] arregloFechas = fechaFormateada.split(" ");
+        String dia = arregloFechas[0];
+        String mes = arregloFechas[1];
+        String anio = arregloFechas[2];
         parametros.put("fechaEntrega", reporteDto.getFechaEntrega());
+        parametros.put("diaFechaEntrega", dia);
+        parametros.put("mesFechaEntrega", mes);
+        parametros.put("anioFechaEntrega", anio);
 //        private String fechaSalida;
-        parametros.put("fechaSalida", reporteDto.getFechaSalida());
 //        parametros.put("condition", " AND SDC.FEC_ENTRADA LIKE '%" + fecha + "%' AND SV.NOM_VELATORIO = '" + reporteDto.getVelatorio() + "'");
         parametros.put("rutaNombreReporte", reporteDto.getRuta());
         parametros.put("tipoReporte", reporteDto.getTipoReporte());

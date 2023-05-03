@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 @Service
@@ -151,7 +152,7 @@ public class ValeSalidaServiceImpl implements ValeSalidaService {
     }
 
     @Override
-    public Response<?> consultarDatosPantallaRegistro(DatosRequest request, Authentication authentication) throws IOException {
+    public Response<?> consultarDatosPantallaRegistro(DatosRequest request, Authentication authentication) throws IOException, ParseException {
         // siempre deben de llegar el folio, la delegacion y el velatorio
 
         // todo - se va a usar para ver si tiene el nivel necesario para poder realizar la consulta
@@ -176,7 +177,7 @@ public class ValeSalidaServiceImpl implements ValeSalidaService {
         return getValidacionResponse(response);
     }
 
-    private Response<?> getValidacionResponse(Response<?> response) {
+    private Response<?> getValidacionResponse(Response<?> response) throws ParseException {
         final List<ValeSalidaResponse> listaValeSalidaResponse = getListaValeSalidaResponse(response);
         if (listaValeSalidaResponse.isEmpty()) {
             return MensajeResponseUtil.mensajeConsultaResponse(response, "No hay registros en el dia");
@@ -292,7 +293,7 @@ public class ValeSalidaServiceImpl implements ValeSalidaService {
         // todo - tengo que recuperar primero los datos del formato, por lo que hay que usar la consulta del detalle
         // recuperar el idValeSalida
         Long idValeSalida = gson.fromJson(
-                String.valueOf(request.getDatos().get("palabra")),
+                String.valueOf(request.getDatos().get("id")),
                 Long.class);
 
         // recuperar los datos para el reporte
@@ -301,7 +302,7 @@ public class ValeSalidaServiceImpl implements ValeSalidaService {
 
         DatosRequest datosRequest = request;
         Map<String, Object> parametros = new HashMap<>();
-        parametros.put("palabra", reporteDto.getIdValeSalida());
+        parametros.put("id", reporteDto.getIdValeSalida());
         datosRequest.setDatos(parametros);
         final Response<?> response = consultarDetalle(request, authentication);
         ValeSalidaDto datosValeSalida = mapper.convertValue(response.getDatos(), ValeSalidaDto.class);
@@ -324,14 +325,27 @@ public class ValeSalidaServiceImpl implements ValeSalidaService {
         // para la tabla
         reporteDto.setNombreDelegacion(datosValeSalida.getNombreDelegacion());
         reporteDto.setNombreVelatorio(datosValeSalida.getNombreVelatorio());
+
+        reporteDto.setNombreResponsableEntrega(datosValeSalida.getNombreResponsableEntrega());
+        reporteDto.setMatriculaResponsableEntrega(datosValeSalida.getMatriculaResponsableEntrega());
+
         reporteDto.setNombreResponsableInstalacion(datosValeSalida.getNombreResponsableInstalacion());
+        reporteDto.setMatriculaResponsableInstalacion(datosValeSalida.getMatriculaResponsableInstalacion());
+
+        reporteDto.setNombreResponsableEquipo(datosValeSalida.getNombreResponsableEquipoVelacion());
+        reporteDto.setMatriculaResponsableEquipo(datosValeSalida.getMatriculaResponsableEquipoVelacion());
+
         reporteDto.setDiasNovenario(datosValeSalida.getDiasNovenario());
         reporteDto.setFolioOds(datosValeSalida.getFolioOds());
         reporteDto.setDomicilio(datosValeSalida.recuperarDomicilio());
+        reporteDto.setEstado(datosValeSalida.getEstado());
+
         reporteDto.setArticulos(datosValeSalida.getArticulos());
-        reporteDto.setNombreResponsableEquipo(datosValeSalida.getNombreResponsableEquipoVelacion());
+
         reporteDto.setFechaEntrega(datosValeSalida.getFechaEntrada());
+        reporteDto.setFechaEntregaTmp(datosValeSalida.getFechaEntradaTmp());
         reporteDto.setFechaSalida(datosValeSalida.getFechaSalida());
+        reporteDto.setNombreContratante(datosValeSalida.getNombreContratante());
 
         Map<String, Object> parametosReporte = valeSalida.generarReporte(reporteDto);
 
@@ -424,9 +438,12 @@ public class ValeSalidaServiceImpl implements ValeSalidaService {
      * @param listaValeSalidaResponse
      * @return
      */
-    private static Response<ValeSalidaDto> getValeSalidaDtoResponse(Response<?> response, List<ValeSalidaResponse> listaValeSalidaResponse) {
+    private static Response<ValeSalidaDto> getValeSalidaDtoResponse(Response<?> response, List<ValeSalidaResponse> listaValeSalidaResponse) throws ParseException {
         ValeSalidaDto resultado = null;
         List<DetalleValeSalidaRequest> listaArticulos = new ArrayList<>();
+        final Locale locale = new Locale("es", "MX");
+        final SimpleDateFormat fechaSalidaFormatter = new SimpleDateFormat("dd-MM-yyyy", locale);
+        final SimpleDateFormat fechaEntradaFormatter = new SimpleDateFormat("dd MMMM yyyy", locale);
         for (ValeSalidaResponse valeSalidaResponse : listaValeSalidaResponse) {
             if (resultado == null) {
                 resultado = new ValeSalidaDto();
@@ -449,9 +466,10 @@ public class ValeSalidaServiceImpl implements ValeSalidaService {
                 resultado.setNombreResponsableEquipoVelacion(valeSalidaResponse.getNombreResponsableEquipo());
 
                 resultado.setDiasNovenario(valeSalidaResponse.getDiasNovenario());
-
-                resultado.setFechaSalida(valeSalidaResponse.getFechaSalida());
-                resultado.setFechaEntrada(valeSalidaResponse.getFechaEntrada());
+//                final Date parse = new SimpleDateFormat("yyyy-MM-dd").parse(valeSalidaResponse.getFechaSalida());
+                resultado.setFechaSalida(fechaSalidaFormatter.format(new SimpleDateFormat("yyyy-MM-dd").parse(valeSalidaResponse.getFechaSalida())));
+                resultado.setFechaEntrada(fechaSalidaFormatter.format(new SimpleDateFormat("yyyy-MM-dd").parse(valeSalidaResponse.getFechaEntrada())));
+                resultado.setFechaEntradaTmp(new SimpleDateFormat("yyyy-MM-dd").parse(valeSalidaResponse.getFechaEntrada()));
 
                 resultado.setCantidadArticulos(valeSalidaResponse.getTotalArticulos());
                 resultado.setCalle(valeSalidaResponse.getCalle());
@@ -459,6 +477,7 @@ public class ValeSalidaServiceImpl implements ValeSalidaService {
                 resultado.setNumInt(valeSalidaResponse.getNumInt());
                 resultado.setColonia(valeSalidaResponse.getColonia());
                 resultado.setMunicipio(valeSalidaResponse.getMunicipio());
+                resultado.setEstado(valeSalidaResponse.getEstado());
                 resultado.setCp(valeSalidaResponse.getCodigoPostal());
 
             }

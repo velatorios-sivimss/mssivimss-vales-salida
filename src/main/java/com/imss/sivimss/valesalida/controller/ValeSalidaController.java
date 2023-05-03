@@ -79,7 +79,7 @@ public class ValeSalidaController {
     @Retry(name = "msflujo", fallbackMethod = "fallbackGenerico")
     @TimeLimiter(name = "msflujo")
     @PostMapping("/consultar-datos-ods")
-    public CompletableFuture<?> consultarDatosRegistro(@RequestBody DatosRequest request, Authentication authentication) throws IOException {
+    public CompletableFuture<?> consultarDatosRegistro(@RequestBody DatosRequest request, Authentication authentication) throws IOException, ParseException {
         Response<?> response = valeSalidaService.consultarDatosPantallaRegistro(request, authentication);
         return CompletableFuture.supplyAsync(() -> getResponseEntity(response));
     }
