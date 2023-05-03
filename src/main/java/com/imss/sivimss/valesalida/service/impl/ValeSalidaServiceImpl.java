@@ -467,9 +467,11 @@ public class ValeSalidaServiceImpl implements ValeSalidaService {
 
                 resultado.setDiasNovenario(valeSalidaResponse.getDiasNovenario());
 //                final Date parse = new SimpleDateFormat("yyyy-MM-dd").parse(valeSalidaResponse.getFechaSalida());
-                resultado.setFechaSalida(fechaSalidaFormatter.format(new SimpleDateFormat("yyyy-MM-dd").parse(valeSalidaResponse.getFechaSalida())));
-                resultado.setFechaEntrada(fechaSalidaFormatter.format(new SimpleDateFormat("yyyy-MM-dd").parse(valeSalidaResponse.getFechaEntrada())));
-                resultado.setFechaEntradaTmp(new SimpleDateFormat("yyyy-MM-dd").parse(valeSalidaResponse.getFechaEntrada()));
+                if (valeSalidaResponse.getFechaSalida() != null) {
+                    resultado.setFechaSalida(fechaSalidaFormatter.format(new SimpleDateFormat("yyyy-MM-dd").parse(valeSalidaResponse.getFechaSalida())));
+                    resultado.setFechaEntrada(fechaSalidaFormatter.format(new SimpleDateFormat("yyyy-MM-dd").parse(valeSalidaResponse.getFechaEntrada())));
+                    resultado.setFechaEntradaTmp(new SimpleDateFormat("yyyy-MM-dd").parse(valeSalidaResponse.getFechaEntrada()));
+                }
 
                 resultado.setCantidadArticulos(valeSalidaResponse.getTotalArticulos());
                 resultado.setCalle(valeSalidaResponse.getCalle());

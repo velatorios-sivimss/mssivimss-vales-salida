@@ -129,7 +129,6 @@ public class ValeSalidaController {
         Response<?> response = valeSalidaService.generarReportePdf(request, authentication);
         return CompletableFuture
                 .supplyAsync(() -> new ResponseEntity<>(response, HttpStatus.valueOf(response.getCodigo())));
-
     }
 
     /**
