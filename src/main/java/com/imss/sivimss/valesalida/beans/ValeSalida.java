@@ -65,7 +65,7 @@ public class ValeSalida {
                         "cp.DES_ESTADO as estado",
                         "cp.DES_MNPIO as municipio",
                         "cp.CVE_CODIGO_POSTAL as codigoPostal",
-                        "dvs.ID_INVE_ARTICULO as idArticulo",
+                        "dvs.ID_INVENTARIO as idArticulo",
                         "inventario.DES_ARTICULO as nombreArticulo",
                         "dvs.CAN_ARTICULOS as cantidadArticulos",
                         "dvs.DES_OBSERVACION as observaciones")
@@ -81,8 +81,8 @@ public class ValeSalida {
                 .join("SVC_INFORMACION_SERVICIO_VELACION infoOds", "infoOds.ID_INFORMACION_SERVICIO = infoServ.ID_INFORMACION_SERVICIO")
                 .join("SVT_DOMICILIO domicilio", "domicilio.ID_DOMICILIO = infoOds.ID_DOMICILIO")
                 .join("SVC_CP cp", "cp.ID_CODIGO_POSTAL = domicilio.ID_CP")
-                .leftJoin("SVT_VALE_SALIDADETALLE dvs", "dvs.ID_VALESALIDA = vs.ID_VALESALIDA", "dvs.IND_ACTIVO = 1")
-                .join("SVT_INVENTARIO inventario", "dvs.ID_INVE_ARTICULO = inventario.ID_INVENTARIO");
+                .leftJoin("SVT_VALE_SALIDADETALLE dvs", "dvs.ID_VALESALIDA = vs.ID_VALESALIDA", "dvs.IND_ACTIVO = 1").or("dvs.IND_ACTIVO = 2")
+                .join("SVT_INVENTARIO inventario", "dvs.ID_INVENATARIO = inventario.ID_INVENTARIO");
         queryUtil.where("vs.ID_VALESALIDA = :idValeSalida")
                 .setParameter("idValeSalida", id)
                 .setParameter("idDelegacion", idDelegacion);
@@ -126,7 +126,7 @@ public class ValeSalida {
      */
     public DatosRequest cambiarEstatusDetalleValeSalida(Long idValeSalida, int estatus) {
 
-        String query = "UPDATE SVT_VALE_SALIDADETALLE set CVE_ESTATUS = " + estatus + " WHERE ID_VALESALIDA = " + idValeSalida + " and cve_estatus = 1";
+        String query = "UPDATE SVT_VALE_SALIDADETALLE set IND_ACTIVO = " + estatus + " WHERE ID_VALESALIDA = " + idValeSalida + " AND IND_ACTIVO = 1";
 
         Map<String, Object> parametros = new HashMap<>();
         DatosRequest datos = new DatosRequest();
@@ -335,7 +335,7 @@ public class ValeSalida {
             QueryHelper queryHelper = new QueryHelper("INSERT INTO SVT_VALE_SALIDADETALLE");
             final boolean isIdValeSalida = idValeSalida != null;
             queryHelper.agregarParametroValues("ID_VALESALIDA", isIdValeSalida ? String.valueOf(idValeSalida) : "idTabla");
-            queryHelper.agregarParametroValues("ID_INVE_ARTICULO", String.valueOf(detalleValeSalida.getIdInventario()));
+            queryHelper.agregarParametroValues("ID_INVENTARIO", String.valueOf(detalleValeSalida.getIdInventario()));
             queryHelper.agregarParametroValues("CAN_ARTICULOS", String.valueOf(detalleValeSalida.getCantidad()));
             queryHelper.agregarParametroValues("DES_OBSERVACION", "'" + detalleValeSalida.getObservaciones() + "'");
             queryHelper.agregarParametroValues("IND_ACTIVO", "1");
@@ -399,7 +399,9 @@ public class ValeSalida {
 
             // modificar tambien el detalle
         }
-
+//        else {
+//            // se modifican solo los articulos
+//        }
         String query = queryHelper.obtenerQueryActualizar();
         DatosRequest datos = new DatosRequest();
         Map<String, Object> parametros = new HashMap<>();
@@ -441,7 +443,7 @@ public class ValeSalida {
         queryHelper.agregarParametroValues("ID_ARTICULO", String.valueOf(articulo.getIdInventario()));
         queryHelper.agregarParametroValues("CAN_ARTICULOS", String.valueOf(articulo.getCantidad()));
         queryHelper.agregarParametroValues("DES_OBSERVACION", "'" + articulo.getObservaciones() + "'");
-        queryHelper.agregarParametroValues("cve_estatus", String.valueOf(articulo.getObservaciones()));
+        queryHelper.agregarParametroValues("IND_ACTIVO", String.valueOf(estatus));
 
         return getDatosRequest(queryHelper.toString());
     }
@@ -466,7 +468,7 @@ public class ValeSalida {
         queryUtil.select("ID_ORDEN_SERVICIO as idOds",
                         "CVE_FOLIO as folioOds")
                 .from("SVC_ORDEN_SERVICIO")
-                .where("CVE_ESTATUS = 1");
+                .where("ID_ESTATUS_ORDEN_SERVICIO = 2");
         return getDatosRequest(queryUtil);
     }
 
@@ -548,7 +550,7 @@ public class ValeSalida {
      */
     public DatosRequest cambiarEstatus(Long idValeSalida) {
         StringBuilder queryBuilder = new StringBuilder("UPDATE SVT_VALE_SALIDA ");
-        queryBuilder.append("SET CVE_ESTATUS = false ")
+        queryBuilder.append("SET IND_ACTIVO = 0 ")
                 .append("WHERE ID_VALE_SALIDA = ").append(idValeSalida);
         String query = queryBuilder.toString();
         Map<String, Object> parametros = new HashMap<>();

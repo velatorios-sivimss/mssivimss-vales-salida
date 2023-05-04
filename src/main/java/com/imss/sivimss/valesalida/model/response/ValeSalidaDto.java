@@ -11,7 +11,7 @@ import java.util.List;
 @Getter
 @Setter
 public class ValeSalidaDto {
-    private Long IdValeSalida;
+    private Long idValeSalida;
     private String folioValeSalida;
     private Long idVelatorio;
     private String nombreVelatorio;

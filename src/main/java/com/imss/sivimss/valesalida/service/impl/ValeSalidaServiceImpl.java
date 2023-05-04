@@ -202,6 +202,7 @@ public class ValeSalidaServiceImpl implements ValeSalidaService {
     @Override
     public Response<?> modificarVale(DatosRequest request, Authentication authentication) throws IOException {
         ValeSalidaDto valeSalidaDto = getValeSalida(request.getDatos());
+        // eliminar
         cambiarEstatusDetalleVale(
                 valeSalidaDto.getIdValeSalida(),
                 ESTATUS_ELIMINADO,
