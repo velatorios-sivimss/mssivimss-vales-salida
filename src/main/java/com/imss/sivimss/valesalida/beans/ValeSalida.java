@@ -72,8 +72,12 @@ public class ValeSalida {
                 .from("SVT_VALE_SALIDA vs")
                 .join("SVC_VELATORIO v", "vs.ID_VELATORIO = v.ID_VELATORIO")
                 .join("SVC_DELEGACION d", "d.ID_DELEGACION = :idDelegacion")
-                .join("SVC_ORDEN_SERVICIO ods", "vs.ID_ORDEN_SERVICIO = ods.ID_ORDEN_SERVICIO")
-                .join("SVC_FINADO usuFinado", "v.ID_VELATORIO = usuFinado.ID_VELATORIO", "usuFinado.ID_ORDEN_SERVICIO = ods.ID_ORDEN_SERVICIO")
+                .join("SVC_ORDEN_SERVICIO ods",
+                        "vs.ID_ORDEN_SERVICIO = ods.ID_ORDEN_SERVICIO",
+                        "ods.ID_ESTATUS_ORDEN_SERVICIO = 2")
+                .join("SVC_FINADO usuFinado",
+                        "v.ID_VELATORIO = usuFinado.ID_VELATORIO",
+                        "usuFinado.ID_ORDEN_SERVICIO = ods.ID_ORDEN_SERVICIO")
                 .join("SVC_PERSONA perFinado", "usuFinado.ID_PERSONA = perFinado.ID_PERSONA")
                 .join("SVC_CONTRATANTE usuContratante", "ods.ID_CONTRATANTE = usuContratante.ID_CONTRATANTE")
                 .join("SVC_PERSONA perContratante", "usuContratante.ID_PERSONA = perContratante.ID_PERSONA")
@@ -81,8 +85,9 @@ public class ValeSalida {
                 .join("SVC_INFORMACION_SERVICIO_VELACION infoOds", "infoOds.ID_INFORMACION_SERVICIO = infoServ.ID_INFORMACION_SERVICIO")
                 .join("SVT_DOMICILIO domicilio", "domicilio.ID_DOMICILIO = infoOds.ID_DOMICILIO")
                 .join("SVC_CP cp", "cp.ID_CODIGO_POSTAL = domicilio.ID_CP")
-                .leftJoin("SVT_VALE_SALIDADETALLE dvs", "dvs.ID_VALESALIDA = vs.ID_VALESALIDA", "dvs.IND_ACTIVO = 1").or("dvs.IND_ACTIVO = 2")
-                .join("SVT_INVENTARIO inventario", "dvs.ID_INVENATARIO = inventario.ID_INVENTARIO");
+                .leftJoin("SVT_VALE_SALIDADETALLE dvs",
+                        "dvs.ID_VALESALIDA = vs.ID_VALESALIDA", "dvs.ID_ESTATUS = 1").or("dvs.ID_ESTATUS = 2")
+                .join("SVT_INVENTARIO inventario", "dvs.ID_INVENTARIO = inventario.ID_INVENTARIO");
         queryUtil.where("vs.ID_VALESALIDA = :idValeSalida")
                 .setParameter("idValeSalida", id)
                 .setParameter("idDelegacion", idDelegacion);
@@ -126,7 +131,7 @@ public class ValeSalida {
      */
     public DatosRequest cambiarEstatusDetalleValeSalida(Long idValeSalida, int estatus) {
 
-        String query = "UPDATE SVT_VALE_SALIDADETALLE set IND_ACTIVO = " + estatus + " WHERE ID_VALESALIDA = " + idValeSalida + " AND IND_ACTIVO = 1";
+        String query = "UPDATE SVT_VALE_SALIDADETALLE set ID_ESTATUS = " + estatus + " WHERE ID_VALESALIDA = " + idValeSalida + " AND ID_ESTATUS = 1";
 
         Map<String, Object> parametros = new HashMap<>();
         DatosRequest datos = new DatosRequest();
@@ -245,7 +250,8 @@ public class ValeSalida {
 
         queryUtil.where(
                         "ods.CVE_FOLIO = :folioOds",
-                        "d.id_delegacion = :idDelegacion",
+                        "ods.ID_ESTATUS_ORDEN_SERVICIO = 2",
+                        "d.ID_DELEGACION = :idDelegacion",
                         "v.ID_VELATORIO = :idVelatorio")
                 .setParameter("folioOds", request.getFolioOds())
                 .setParameter("idDelegacion", request.getIdDelegacion())
@@ -302,7 +308,7 @@ public class ValeSalida {
         // voy a tener que calcular este valor
         queryHelper.agregarParametroValues("CAN_ARTICULOS", String.valueOf(valeSalida.getCantidadArticulos()));
 
-        queryHelper.agregarParametroValues("IND_ACTIVO", "1");
+        queryHelper.agregarParametroValues("ID_ESTATUS", "1");
         queryHelper.agregarParametroValues("ID_USUARIO_ALTA", String.valueOf(usuarioDto.getIdUsuario()));
         queryHelper.agregarParametroValues("FEC_ALTA", "CURRENT_TIMESTAMP");
 
@@ -338,7 +344,7 @@ public class ValeSalida {
             queryHelper.agregarParametroValues("ID_INVENTARIO", String.valueOf(detalleValeSalida.getIdInventario()));
             queryHelper.agregarParametroValues("CAN_ARTICULOS", String.valueOf(detalleValeSalida.getCantidad()));
             queryHelper.agregarParametroValues("DES_OBSERVACION", "'" + detalleValeSalida.getObservaciones() + "'");
-            queryHelper.agregarParametroValues("IND_ACTIVO", "1");
+            queryHelper.agregarParametroValues("ID_ESTATUS", "1");
             if (!isIdValeSalida) {
                 query.append(" $$ ").append(queryHelper.obtenerQueryInsertar());
             }
@@ -399,6 +405,8 @@ public class ValeSalida {
 
             // modificar tambien el detalle
         }
+
+        queryHelper.addWhere("ID_VALESALIDA = " + valeSalida.getIdValeSalida());
 //        else {
 //            // se modifican solo los articulos
 //        }
@@ -406,6 +414,7 @@ public class ValeSalida {
         DatosRequest datos = new DatosRequest();
         Map<String, Object> parametros = new HashMap<>();
         parametros.put(AppConstantes.QUERY, getBinary(query));
+        datos.setDatos(parametros);
         return datos;
     }
 
@@ -440,12 +449,13 @@ public class ValeSalida {
     public DatosRequest actualizarDetalleValeSalida(Long idValeSalida, DetalleValeSalidaRequest articulo, int estatus) {
         QueryHelper queryHelper = new QueryHelper("INSERT INTO SVT_VALE_SALIDADETALLE");
         queryHelper.agregarParametroValues("ID_VALESALIDA", String.valueOf(idValeSalida));
-        queryHelper.agregarParametroValues("ID_ARTICULO", String.valueOf(articulo.getIdInventario()));
+        queryHelper.agregarParametroValues("ID_INVENTARIO", String.valueOf(articulo.getIdInventario()));
         queryHelper.agregarParametroValues("CAN_ARTICULOS", String.valueOf(articulo.getCantidad()));
         queryHelper.agregarParametroValues("DES_OBSERVACION", "'" + articulo.getObservaciones() + "'");
-        queryHelper.agregarParametroValues("IND_ACTIVO", String.valueOf(estatus));
+        queryHelper.agregarParametroValues("ID_ESTATUS", String.valueOf(estatus));
+//        queryHelper.addWhere("ID_VALESALIDA = " + idValeSalida);
 
-        return getDatosRequest(queryHelper.toString());
+        return getDatosRequest(queryHelper.obtenerQueryInsertar());
     }
 
     private DatosRequest getDatosRequest(String string) {
@@ -517,7 +527,7 @@ public class ValeSalida {
         parametros.put("matriculaResponsableInstalacion", reporteDto.getMatriculaResponsableInstalacion());
         // pasar los datos para la consulta de la tabla de articulos
 //        private List<DetalleValeSalidaRequest> articulos;
-        parametros.put("condition", "WHERE vsd.`ID_VALESALIDA` = " + reporteDto.getIdValeSalida() + " AND vsd.`IND_ACTIVO` = 1");
+        parametros.put("condition", "WHERE vsd.`ID_VALESALIDA` = " + reporteDto.getIdValeSalida() + " AND vsd.`ID_ESTATUS` = 3");
 //        private String nombreResponsableEquipo;
         parametros.put("nombreResponsableEquipo", reporteDto.getNombreResponsableEquipo());
         parametros.put("matriculaResponsableEquipo", reporteDto.getMatriculaResponsableEquipo());
@@ -528,12 +538,13 @@ public class ValeSalida {
         String fechaFormateada = dateFormatter.format(reporteDto.getFechaEntregaTmp());
         String[] arregloFechas = fechaFormateada.split(" ");
         String dia = arregloFechas[0];
-        String mes = arregloFechas[1];
+        String mes = arregloFechas[1].toUpperCase();
         String anio = arregloFechas[2];
         parametros.put("fechaEntrega", reporteDto.getFechaEntrega());
         parametros.put("diaFechaEntrega", dia);
         parametros.put("mesFechaEntrega", mes);
         parametros.put("anioFechaEntrega", anio);
+        parametros.put("ciudad", reporteDto.getEstado());
 //        private String fechaSalida;
 //        parametros.put("condition", " AND SDC.FEC_ENTRADA LIKE '%" + fecha + "%' AND SV.NOM_VELATORIO = '" + reporteDto.getVelatorio() + "'");
         parametros.put("rutaNombreReporte", reporteDto.getRuta());
@@ -550,7 +561,7 @@ public class ValeSalida {
      */
     public DatosRequest cambiarEstatus(Long idValeSalida) {
         StringBuilder queryBuilder = new StringBuilder("UPDATE SVT_VALE_SALIDA ");
-        queryBuilder.append("SET IND_ACTIVO = 0 ")
+        queryBuilder.append("SET ID_ESTATUS = 0 ")
                 .append("WHERE ID_VALE_SALIDA = ").append(idValeSalida);
         String query = queryBuilder.toString();
         Map<String, Object> parametros = new HashMap<>();

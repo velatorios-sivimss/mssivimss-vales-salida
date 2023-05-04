@@ -153,7 +153,7 @@ public class ValeSalidaServiceImpl implements ValeSalidaService {
 
     @Override
     public Response<?> consultarDatosPantallaRegistro(DatosRequest request, Authentication authentication) throws IOException, ParseException {
-        // siempre deben de llegar el folio, la delegacion y el velatorio
+        // todo - agregar validacion: siempre deben de llegar el folio, la delegacion y el velatorio
 
         // todo - se va a usar para ver si tiene el nivel necesario para poder realizar la consulta
         // hay que recuperar la delegacion del usuario para hacer la consulta
@@ -218,7 +218,7 @@ public class ValeSalidaServiceImpl implements ValeSalidaService {
             return MensajeResponseUtil.mensajeResponse(responseModificarVale, "");
         }
 
-        actualizarDetalleValeSalida(valeSalidaDto.getIdValeSalida(), valeSalidaDto.getArticulos(), 2, authentication);
+        actualizarDetalleValeSalida(valeSalidaDto.getIdValeSalida(), valeSalidaDto.getArticulos(), 1, authentication);
         return MensajeResponseUtil.mensajeResponse(responseModificarVale, MSG023_GUARDAR_OK);
     }
 
@@ -470,6 +470,8 @@ public class ValeSalidaServiceImpl implements ValeSalidaService {
 //                final Date parse = new SimpleDateFormat("yyyy-MM-dd").parse(valeSalidaResponse.getFechaSalida());
                 if (valeSalidaResponse.getFechaSalida() != null) {
                     resultado.setFechaSalida(fechaSalidaFormatter.format(new SimpleDateFormat("yyyy-MM-dd").parse(valeSalidaResponse.getFechaSalida())));
+                }
+                if (valeSalidaResponse.getFechaEntrada() != null) {
                     resultado.setFechaEntrada(fechaSalidaFormatter.format(new SimpleDateFormat("yyyy-MM-dd").parse(valeSalidaResponse.getFechaEntrada())));
                     resultado.setFechaEntradaTmp(new SimpleDateFormat("yyyy-MM-dd").parse(valeSalidaResponse.getFechaEntrada()));
                 }
