@@ -114,6 +114,15 @@ public class ValeSalidaController {
     @CircuitBreaker(name = "msflujo", fallbackMethod = "fallbackGenerico")
     @Retry(name = "msflujo", fallbackMethod = "fallbackGenerico")
     @TimeLimiter(name = "msflujo")
+    @PostMapping("/registrar-entrada")
+    public CompletableFuture<?> registrarEntradaVale(@RequestBody DatosRequest request, Authentication authentication) throws IOException {
+        Response<?> response = valeSalidaService.registrarEntrada(request, authentication);
+        return CompletableFuture.supplyAsync(() -> getResponseEntity(response));
+    }
+
+    @CircuitBreaker(name = "msflujo", fallbackMethod = "fallbackGenerico")
+    @Retry(name = "msflujo", fallbackMethod = "fallbackGenerico")
+    @TimeLimiter(name = "msflujo")
     @PostMapping("/cambiar-estatus")
     public CompletableFuture<?> cambiarEstatus(@RequestBody DatosRequest request, Authentication authentication) throws IOException {
         Response<?> response = valeSalidaService.cambiarEstatus(request, authentication);
@@ -126,6 +135,16 @@ public class ValeSalidaController {
     @PostMapping("/descargar-reporte")
     public CompletableFuture<?> descargarReporte(@RequestBody DatosRequest request, Authentication authentication) throws IOException, ParseException {
 
+        Response<?> response = valeSalidaService.generarReportePdf(request, authentication);
+        return CompletableFuture
+                .supplyAsync(() -> new ResponseEntity<>(response, HttpStatus.valueOf(response.getCodigo())));
+    }
+
+    @CircuitBreaker(name = "msflujo", fallbackMethod = "fallbackGenerico")
+    @Retry(name = "msflujo", fallbackMethod = "fallbackGenerico")
+    @TimeLimiter(name = "msflujo")
+    @PostMapping("/descargar-reporte-tabla")
+    public CompletableFuture<?> descargarReporteTabla(@RequestBody DatosRequest request, Authentication authentication) throws IOException, ParseException {
         Response<?> response = valeSalidaService.generarReportePdf(request, authentication);
         return CompletableFuture
                 .supplyAsync(() -> new ResponseEntity<>(response, HttpStatus.valueOf(response.getCodigo())));
