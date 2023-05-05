@@ -88,7 +88,8 @@ public class ValeSalida {
                 .leftJoin("SVT_VALE_SALIDADETALLE dvs",
                         "dvs.ID_VALESALIDA = vs.ID_VALESALIDA", "dvs.ID_ESTATUS = 1").or("dvs.ID_ESTATUS = 2")
                 .join("SVT_INVENTARIO inventario", "dvs.ID_INVENTARIO = inventario.ID_INVENTARIO");
-        queryUtil.where("vs.ID_VALESALIDA = :idValeSalida")
+        queryUtil.where("vs.ID_VALESALIDA = :idValeSalida",
+                        "vs.ID_ESTATUS <> 0")
                 .setParameter("idValeSalida", id)
                 .setParameter("idDelegacion", idDelegacion);
 
@@ -172,7 +173,8 @@ public class ValeSalida {
                         "CVE_MATRICULARESPEQUIVELACION as matriculaResponsableEquipo")
                 .from("SVT_VALE_SALIDA vs")
                 .join("SVC_VELATORIO v", "vs.ID_VELATORIO = v.ID_VELATORIO")
-                .join("SVC_ORDEN_SERVICIO ods", "vs.ID_ORDEN_SERVICIO = ods.ID_ORDEN_SERVICIO");
+                .join("SVC_ORDEN_SERVICIO ods", "vs.ID_ORDEN_SERVICIO = ods.ID_ORDEN_SERVICIO")
+                .where("vs.ID_ESTATUS <> 0");
 
         if (filtros != null && !filtros.validarNulos()) {
             if (filtros.getIdVelatorio() != null) {
@@ -385,7 +387,7 @@ public class ValeSalida {
      * @param registrarEntrada
      * @return
      */
-    public DatosRequest modificarVale(ValeSalidaDto valeSalida, boolean registrarEntrada) {
+    public DatosRequest modificarVale(ValeSalidaDto valeSalida, Integer idUsuario, boolean registrarEntrada) {
         // todo - agregar solo los campos que se puedan modificar
         // que es lo que se va a modificar en esta parte?
         //
@@ -405,6 +407,8 @@ public class ValeSalida {
 
             // modificar tambien el detalle
         }
+        queryHelper.agregarParametroValues("ID_USUARIO_MODIFICA", idUsuario.toString());
+        queryHelper.agregarParametroValues("FEC_ACTUALIZACION", "CURRENT_TIMESTAMP");
 
         queryHelper.addWhere("ID_VALESALIDA = " + valeSalida.getIdValeSalida());
 //        else {
@@ -446,14 +450,17 @@ public class ValeSalida {
      * @param estatus
      * @return
      */
-    public DatosRequest actualizarDetalleValeSalida(Long idValeSalida, DetalleValeSalidaRequest articulo, int estatus) {
+    public DatosRequest actualizarDetalleValeSalida(Long idValeSalida, Integer idUsuario, DetalleValeSalidaRequest articulo, int estatus) {
         QueryHelper queryHelper = new QueryHelper("INSERT INTO SVT_VALE_SALIDADETALLE");
         queryHelper.agregarParametroValues("ID_VALESALIDA", String.valueOf(idValeSalida));
         queryHelper.agregarParametroValues("ID_INVENTARIO", String.valueOf(articulo.getIdInventario()));
         queryHelper.agregarParametroValues("CAN_ARTICULOS", String.valueOf(articulo.getCantidad()));
         queryHelper.agregarParametroValues("DES_OBSERVACION", "'" + articulo.getObservaciones() + "'");
         queryHelper.agregarParametroValues("ID_ESTATUS", String.valueOf(estatus));
-//        queryHelper.addWhere("ID_VALESALIDA = " + idValeSalida);
+
+        // todo - agregar lo de el usuario que actualiza
+        queryHelper.agregarParametroValues("ID_USUARIO_ALTA", String.valueOf(idUsuario));
+        queryHelper.agregarParametroValues("FEC_ALTA", "CURRENT_TIMESTAMP");
 
         return getDatosRequest(queryHelper.obtenerQueryInsertar());
     }
@@ -562,7 +569,7 @@ public class ValeSalida {
     public DatosRequest cambiarEstatus(Long idValeSalida) {
         StringBuilder queryBuilder = new StringBuilder("UPDATE SVT_VALE_SALIDA ");
         queryBuilder.append("SET ID_ESTATUS = 0 ")
-                .append("WHERE ID_VALE_SALIDA = ").append(idValeSalida);
+                .append("WHERE ID_VALESALIDA = ").append(idValeSalida);
         String query = queryBuilder.toString();
         Map<String, Object> parametros = new HashMap<>();
         parametros.put(AppConstantes.QUERY, getBinary(query));

@@ -180,7 +180,7 @@ public class ValeSalidaServiceImpl implements ValeSalidaService {
     private Response<?> getValidacionResponse(Response<?> response) throws ParseException {
         final List<ValeSalidaResponse> listaValeSalidaResponse = getListaValeSalidaResponse(response);
         if (listaValeSalidaResponse.isEmpty()) {
-            return MensajeResponseUtil.mensajeConsultaResponse(response, "No hay registros en el dia");
+            return MensajeResponseUtil.mensajeConsultaResponse(response, "45");
         }
         Response<ValeSalidaDto> respuesta = getValeSalidaDtoResponse(response, listaValeSalidaResponse);
 
@@ -202,12 +202,15 @@ public class ValeSalidaServiceImpl implements ValeSalidaService {
     @Override
     public Response<?> modificarVale(DatosRequest request, Authentication authentication) throws IOException {
         ValeSalidaDto valeSalidaDto = getValeSalida(request.getDatos());
+
+        UsuarioDto usuarioDto = gson.fromJson((String) authentication.getPrincipal(), UsuarioDto.class);
+        Integer idUsuario = usuarioDto.getIdUsuario();
         // eliminar
         cambiarEstatusDetalleVale(
                 valeSalidaDto.getIdValeSalida(),
                 ESTATUS_ELIMINADO,
                 authentication);
-        final DatosRequest datosRequest = valeSalida.modificarVale(valeSalidaDto, false);
+        final DatosRequest datosRequest = valeSalida.modificarVale(valeSalidaDto, idUsuario, false);
 
         final Response<?> responseModificarVale = restTemplate.consumirServicio(
                 datosRequest.getDatos(),
@@ -218,14 +221,15 @@ public class ValeSalidaServiceImpl implements ValeSalidaService {
             return MensajeResponseUtil.mensajeResponse(responseModificarVale, "");
         }
 
-        actualizarDetalleValeSalida(valeSalidaDto.getIdValeSalida(), valeSalidaDto.getArticulos(), 1, authentication);
+        actualizarDetalleValeSalida(valeSalidaDto.getIdValeSalida(), idUsuario, valeSalidaDto.getArticulos(), 1, authentication);
         return MensajeResponseUtil.mensajeResponse(responseModificarVale, MSG023_GUARDAR_OK);
     }
 
     @Override
     public Response<?> registrarEntrada(DatosRequest request, Authentication authentication) throws IOException {
         ValeSalidaDto valeSalidaDto = getValeSalida(request.getDatos());
-        valeSalida.modificarVale(valeSalidaDto, true);
+        UsuarioDto usuarioDto = gson.fromJson((String) authentication.getPrincipal(), UsuarioDto.class);
+        valeSalida.modificarVale(valeSalidaDto, usuarioDto.getIdUsuario(), true);
         final int ESTATUS_ENTREGADO = 3;
         cambiarEstatusDetalleVale(valeSalidaDto.getIdValeSalida(), ESTATUS_ENTREGADO, authentication);
 //        actualizarInventario(valeSalidaDto.getArticulos(), false, authentication);
@@ -291,13 +295,6 @@ public class ValeSalidaServiceImpl implements ValeSalidaService {
 
     @Override
     public Response<?> generarReportePdf(DatosRequest request, Authentication authentication) throws IOException, ParseException {
-        // todo - tengo que recuperar primero los datos del formato, por lo que hay que usar la consulta del detalle
-        // recuperar el idValeSalida
-        Long idValeSalida = gson.fromJson(
-                String.valueOf(request.getDatos().get("id")),
-                Long.class);
-
-        // recuperar los datos para el reporte
         String datosJson = String.valueOf(request.getDatos().get(AppConstantes.DATOS));
         ReporteDto reporteDto = gson.fromJson(datosJson, ReporteDto.class);
 
@@ -415,12 +412,14 @@ public class ValeSalidaServiceImpl implements ValeSalidaService {
      * @param authentication
      * @throws IOException
      */
-    private void actualizarDetalleValeSalida(Long idValeSalida, List<DetalleValeSalidaRequest> articulos, int estatus, Authentication authentication) throws IOException {
+    private void actualizarDetalleValeSalida(Long idValeSalida, Integer idUsuario, List<DetalleValeSalidaRequest> articulos, int estatus, Authentication authentication) throws IOException {
         for (DetalleValeSalidaRequest articulo : articulos) {
             final DatosRequest datosRequest = valeSalida.actualizarDetalleValeSalida(
                     idValeSalida,
+                    idUsuario,
                     articulo,
-                    estatus);
+                    estatus
+            );
 
             Response<?> response = restTemplate.consumirServicio(datosRequest.getDatos(),
                     URL_DOMINIO_CREAR,

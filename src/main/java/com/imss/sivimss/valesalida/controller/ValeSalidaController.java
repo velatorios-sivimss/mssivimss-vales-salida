@@ -116,7 +116,7 @@ public class ValeSalidaController {
     @TimeLimiter(name = "msflujo")
     @PostMapping("/cambiar-estatus")
     public CompletableFuture<?> cambiarEstatus(@RequestBody DatosRequest request, Authentication authentication) throws IOException {
-        Response<?> response = valeSalidaService.modificarVale(request, authentication);
+        Response<?> response = valeSalidaService.cambiarEstatus(request, authentication);
         return CompletableFuture.supplyAsync(() -> getResponseEntity(response));
     }
 
