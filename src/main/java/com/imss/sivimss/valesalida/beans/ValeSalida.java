@@ -42,9 +42,10 @@ public class ValeSalida {
         // todo - revisar que funcione correctamente
         SelectQueryUtil queryUtil = new SelectQueryUtil();
         queryUtil.select("vs.ID_VALESALIDA as idValeSalida",
+                        "vs.CVE_FOLIO as folioValeSalida",
                         "v.ID_VELATORIO as idVelatorio",
                         "v.NOM_VELATORIO as nombreVelatorio",
-                        "vs.CVE_FOLIO as folioValeSalida",
+                        "d.DES_DELEGACION as nombreDelegacion",
                         "vs.ID_ORDEN_SERVICIO as idOds",
                         "ods.CVE_FOLIO as folioOds",
                         "perContratante.NOM_PERSONA as nombreContratante",
@@ -53,9 +54,11 @@ public class ValeSalida {
                         "vs.FEC_ENTRADA as fechaEntrada",
                         "vs.NUM_DIA_NOVENARIO as diasNovenario",
                         "vs.NOM_RESPON_INSTA as nombreResponsableInstalacion",
-                        "vs.CVE_MATRICULA_RESPON as matriculaResponsableInstalacion",
+                        "vs.CVE_MATRICULA_RESINST as matriculaResponsableInstalacion",
                         "vs.NOM_RESPEQUIVELACION as nombreResponsableEquipo",
                         "vs.CVE_MATRICULARESPEQUIVELACION as matriculaResponsableEquipo",
+                        "vs.NOM_RESPON_ENTREGA as nombreResponsableEntrega",
+                        "vs.CVE_MATRICULA_RESPON as matriculaResponsableEntrega",
                         "vs.CAN_ARTICULOS as totalArticulos",
                         // todo - refactor, hay que cambiar de donde sale la direccion
                         "domicilio.DES_CALLE as calle",
@@ -175,16 +178,21 @@ public class ValeSalida {
                         "ods.CVE_FOLIO as folioOds",
                         "vs.FEC_SALIDA as fechaSalida",
                         "vs.FEC_ENTRADA as fechaEntrada",
+                        "vs.ID_ESTATUS as idEstatus",
                         "vs.NUM_DIA_NOVENARIO as diasNovenario",
-                        "NOM_RESPON_INSTA as nombreResponsableInstalacion",
-                        "CVE_MATRICULA_RESPON as matriculaResponsableInstalacion",
-                        "NOM_RESPEQUIVELACION as nombreResponsableEquipo",
-                        "CVE_MATRICULARESPEQUIVELACION as matriculaResponsableEquipo")
+                        "vs.NOM_RESPON_INSTA as nombreResponsableInstalacion",
+//                        "vs.CVE_MATRICULA_RESPON as matriculaResponsableInstalacion",
+//                        "vs.NOM_RESPEQUIVELACION as nombreResponsableEquipo",
+//                        "vs.CVE_MATRICULARESPEQUIVELACION as matriculaResponsableEquipo",
+                        "CONCAT(perContratante.NOM_PERSONA, ' ', perContratante.NOM_PRIMER_APELLIDO, ' ', perContratante.NOM_SEGUNDO_APELLIDO) as nombreContratante")
                 .from("SVT_VALE_SALIDA vs")
                 .join("SVC_VELATORIO v", "vs.ID_VELATORIO = v.ID_VELATORIO")
                 .join("SVC_ORDEN_SERVICIO ods", "vs.ID_ORDEN_SERVICIO = ods.ID_ORDEN_SERVICIO")
+                .join("SVC_CONTRATANTE usuContratante", "ods.ID_CONTRATANTE = usuContratante.ID_CONTRATANTE")
+                .join("SVC_PERSONA perContratante", "usuContratante.ID_PERSONA = perContratante.ID_PERSONA")
                 .where("vs.ID_ESTATUS <> 0");
 
+        // todo - falta agregar la delegacion en las validaciones
         if (filtros != null && !filtros.validarNulos()) {
             if (filtros.getIdVelatorio() != null) {
                 queryUtil.where("vs.ID_VELATORIO = :idVelatorio")
@@ -230,8 +238,8 @@ public class ValeSalida {
                         "d.DES_DELEGACION as nombreDelegacion",
                         "ods.ID_ORDEN_SERVICIO as idOds",
                         "ods.CVE_FOLIO as request",
-                        "perContratante.NOM_PERSONA as nombreContratante",
-                        "perFinado.NOM_PERSONA as nombreFinado",
+                        "CONCAT(perContratante.NOM_PERSONA, ' ', perContratante.NOM_PRIMER_APELLIDO, ' ', perContratante.NOM_SEGUNDO_APELLIDO) as nombreContratante",
+                        "CONCAT(perFinado.NOM_PERSONA, ' ', perFinado.NOM_PRIMER_APELLIDO, ' ', perFinado.NOM_SEGUNDO_APELLIDO) as nombreFinado",
                         "domicilio.DES_CALLE as calle",
                         "domicilio.NUM_EXTERIOR as numExt",
                         "domicilio.NUM_INTERIOR as numInt",
@@ -349,6 +357,7 @@ public class ValeSalida {
      * @return
      */
     private String crearDetalleVale(List<DetalleValeSalidaRequest> articulos, Long idValeSalida) {
+        // todo - recuperar el idUsuario, para pasarlo tambien en este metodo
         StringBuilder query = new StringBuilder();
         for (DetalleValeSalidaRequest detalleValeSalida : articulos) {
             QueryHelper queryHelper = new QueryHelper("INSERT INTO SVT_VALE_SALIDADETALLE");
@@ -558,7 +567,7 @@ public class ValeSalida {
         parametros.put("matriculaResponsableInstalacion", reporteDto.getMatriculaResponsableInstalacion());
         // pasar los datos para la consulta de la tabla de articulos
 //        private List<DetalleValeSalidaRequest> articulos;
-        parametros.put("condition", "WHERE vsd.`ID_VALESALIDA` = " + reporteDto.getIdValeSalida() + " AND vsd.`ID_ESTATUS` = 3");
+        parametros.put("condition", "WHERE vsd.`ID_VALESALIDA` = " + reporteDto.getIdValeSalida() + " AND vsd.`ID_ESTATUS` = 2");
 //        private String nombreResponsableEquipo;
         parametros.put("nombreResponsableEquipo", reporteDto.getNombreResponsableEquipo());
         parametros.put("matriculaResponsableEquipo", reporteDto.getMatriculaResponsableEquipo());
