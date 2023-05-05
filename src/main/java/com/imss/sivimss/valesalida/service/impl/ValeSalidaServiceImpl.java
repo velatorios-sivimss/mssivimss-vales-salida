@@ -24,6 +24,8 @@ import java.util.*;
 @Slf4j
 public class ValeSalidaServiceImpl implements ValeSalidaService {
     private static final int ESTATUS_ELIMINADO = 0;
+
+    private static final int ESTATUS_ENTREGADO = 2;
     private static final String MSG_ERROR_REGISTRAR = "5";
     private static final String SIN_INFORMACION = "87";//No contamos con capillas disponibles por el momento. Intenta mas tarde.
     //    MSG020	La fecha inicial no puede ser mayor que la fecha final.
@@ -205,9 +207,10 @@ public class ValeSalidaServiceImpl implements ValeSalidaService {
 
         UsuarioDto usuarioDto = gson.fromJson((String) authentication.getPrincipal(), UsuarioDto.class);
         Integer idUsuario = usuarioDto.getIdUsuario();
-        // eliminar
+        // todo - falta agregar el id del usuario que modifica eliminar
         cambiarEstatusDetalleVale(
                 valeSalidaDto.getIdValeSalida(),
+                idUsuario,
                 ESTATUS_ELIMINADO,
                 authentication);
         final DatosRequest datosRequest = valeSalida.modificarVale(valeSalidaDto, idUsuario, false);
@@ -229,19 +232,30 @@ public class ValeSalidaServiceImpl implements ValeSalidaService {
     public Response<?> registrarEntrada(DatosRequest request, Authentication authentication) throws IOException {
         ValeSalidaDto valeSalidaDto = getValeSalida(request.getDatos());
         UsuarioDto usuarioDto = gson.fromJson((String) authentication.getPrincipal(), UsuarioDto.class);
-        valeSalida.modificarVale(valeSalidaDto, usuarioDto.getIdUsuario(), true);
-        final int ESTATUS_ENTREGADO = 3;
-        cambiarEstatusDetalleVale(valeSalidaDto.getIdValeSalida(), ESTATUS_ENTREGADO, authentication);
+        final Integer idUsuario = usuarioDto.getIdUsuario();
+        final DatosRequest datosRequest = valeSalida.modificarVale(valeSalidaDto, idUsuario, true);
+        final Response<?> response = restTemplate.consumirServicio(
+                datosRequest.getDatos(),
+                URL_DOMINIO_ACTUALIZAR,
+                authentication
+        );
+
+        if (response.getError()) {
+            return restTemplate.validarResponse(response);
+        }
+        cambiarEstatusDetalleVale(valeSalidaDto.getIdValeSalida(), idUsuario, ESTATUS_ENTREGADO, authentication);
 //        actualizarInventario(valeSalidaDto.getArticulos(), false, authentication);
-        return null;
+        return MensajeResponseUtil.mensajeResponse(response, MSG133_REGISTRO_ENTRADA_OK);
     }
 
     @Override
     public Response<?> cambiarEstatus(DatosRequest request, Authentication authentication) throws IOException {
         ValeSalidaDto valeSalidaDto = getValeSalida(request.getDatos());
+        UsuarioDto usuarioDto = gson.fromJson((String) authentication.getPrincipal(), UsuarioDto.class);
+        final Integer idUsuario = usuarioDto.getIdUsuario();
         // todo - cambiar los estatus de los articulos del vale
         final Long idValeSalida = valeSalidaDto.getIdValeSalida();
-        final DatosRequest datosRequest = valeSalida.cambiarEstatus(idValeSalida);
+        final DatosRequest datosRequest = valeSalida.cambiarEstatus(idValeSalida, idUsuario);
         final Response<?> response = restTemplate.consumirServicio(
                 datosRequest.getDatos(),
                 URL_DOMINIO_ACTUALIZAR,
@@ -250,7 +264,7 @@ public class ValeSalidaServiceImpl implements ValeSalidaService {
         if (response.getError()) {
             return MensajeResponseUtil.mensajeResponse(response, "");
         }
-        cambiarEstatusDetalleVale(idValeSalida, ESTATUS_ELIMINADO, authentication);
+        cambiarEstatusDetalleVale(idValeSalida, idUsuario, ESTATUS_ELIMINADO, authentication);
         return MensajeResponseUtil.mensajeResponse(response, "Se ha eliminado correctamente");
     }
 
@@ -265,8 +279,8 @@ public class ValeSalidaServiceImpl implements ValeSalidaService {
      * @param authentication
      * @throws IOException
      */
-    private void cambiarEstatusDetalleVale(Long idValeSalida, int estatus, Authentication authentication) throws IOException {
-        final DatosRequest datosRequest = valeSalida.cambiarEstatusDetalleValeSalida(idValeSalida, estatus);
+    private void cambiarEstatusDetalleVale(Long idValeSalida, Integer idUsuario, int estatus, Authentication authentication) throws IOException {
+        final DatosRequest datosRequest = valeSalida.cambiarEstatusDetalleValeSalida(idValeSalida, idUsuario, estatus);
         final Response<?> response = restTemplate.consumirServicio(datosRequest.getDatos(),
                 URL_DOMINIO_ACTUALIZAR,
                 authentication);
@@ -355,6 +369,11 @@ public class ValeSalidaServiceImpl implements ValeSalidaService {
                 authentication
         );
 
+    }
+
+    @Override
+    public Response<?> generarReporteTabla(DatosRequest request, Authentication authentication) throws IOException, ParseException {
+        return null;
     }
 
     /**

@@ -30,4 +30,6 @@ public interface ValeSalidaService {
     Response<?> consultarCatalogoOds(DatosRequest request, Authentication authentication) throws IOException;
 
     Response<?> generarReportePdf(DatosRequest request, Authentication authentication) throws IOException, ParseException;
+
+    Response<?> generarReporteTabla(DatosRequest request, Authentication authentication) throws IOException, ParseException;
 }

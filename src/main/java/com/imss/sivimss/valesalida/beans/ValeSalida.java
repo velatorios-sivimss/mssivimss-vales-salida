@@ -130,9 +130,18 @@ public class ValeSalida {
      * @param idValeSalida
      * @return
      */
-    public DatosRequest cambiarEstatusDetalleValeSalida(Long idValeSalida, int estatus) {
+    public DatosRequest cambiarEstatusDetalleValeSalida(Long idValeSalida, Integer idUsuario, int estatus) {
 
-        String query = "UPDATE SVT_VALE_SALIDADETALLE set ID_ESTATUS = " + estatus + " WHERE ID_VALESALIDA = " + idValeSalida + " AND ID_ESTATUS = 1";
+        // todo - pasar tambien la parte del usuario
+        StringBuilder queryBuilder = new StringBuilder("UPDATE SVT_VALE_SALIDADETALLE SET ");
+        queryBuilder.append("ID_ESTATUS = ").append(estatus).append(", ")
+                .append("ID_USUARIO_MODIFICA = ").append(idUsuario).append(", ")
+                .append("FEC_ACTUALIZACION = ").append("CURRENT_TIMESTAMP").append(" ")
+                .append("WHERE ID_VALESALIDA = ").append(idValeSalida)
+                .append(" AND ID_ESTATUS = 1");
+
+//        String query = "UPDATE SVT_VALE_SALIDADETALLE set ID_ESTATUS = " + estatus + " WHERE ID_VALESALIDA = " + idValeSalida + " AND ID_ESTATUS = 1";
+        String query = queryBuilder.toString();
 
         Map<String, Object> parametros = new HashMap<>();
         DatosRequest datos = new DatosRequest();
@@ -187,10 +196,12 @@ public class ValeSalida {
             }
             if (filtros.getFechaInicio() != null && filtros.getFechaFinal() != null) {
                 if (filtros.validarFechas()) {
-                    queryUtil.where("vs.FECHA_SALIDA >= :fechaInicial",
-                                    "vs.FECHA_SALIDA <= :fechaFin")
+                    queryUtil.where("vs.FEC_SALIDA >= :fechaInicial",
+                                    "vs.FEC_SALIDA <= :fechaFin")
                             .setParameter("fechaInicial", filtros.getFechaInicio())
                             .setParameter("fechaFin", filtros.getFechaFinal());
+                } else {
+                    // todo - mandar el error de la validacion de las fechas pero hay que hacer la validacion en el servicio
                 }
             }
         }
@@ -391,30 +402,43 @@ public class ValeSalida {
         // todo - agregar solo los campos que se puedan modificar
         // que es lo que se va a modificar en esta parte?
         //
-        QueryHelper queryHelper = new QueryHelper("UPDATE SVT_VALE_SALIDA");
-        queryHelper.agregarParametroValues("CAN_ARTICULOS", String.valueOf(valeSalida.getCantidadArticulos()));
+        StringBuilder queryBuilder = new StringBuilder("UPDATE SVT_VALE_SALIDA ");
+        queryBuilder.append("SET ")
+                .append("ID_USUARIO_MODIFICA = ").append(idUsuario).append(", ")
+                .append("FEC_ACTUALIZACION = ").append("CURRENT_TIMESTAMP, ");
+
+//        queryHelper.addWhere("ID_VALESALIDA = " + valeSalida.getIdValeSalida());
+//        QueryHelper queryHelper = new QueryHelper("UPDATE SVT_VALE_SALIDA");
+//        queryHelper.agregarParametroValues("CAN_ARTICULOS", String.valueOf(valeSalida.getCantidadArticulos()));
         // todo - hacer la logica para la entrada de articulos
         // se registran nombres de los responsables
         // todo - recuperar los nombres de los responsables y la matricula
         if (registrarEntrada) {
+            queryBuilder.append("FEC_ENTRADA = ").append("STR_TO_DATE('").append(valeSalida.getFechaEntrada()).append("', '%d-%m-%Y'), ")
+                    .append("NOM_RESPON_ENTREGA = ").append("'").append(valeSalida.getNombreResponsableEntrega()).append("', ")
+                    .append("ID_ESTATUS = ").append(2).append(", ")
+                    .append("CVE_MATRICULA_RESPON = ").append("'").append(valeSalida.getMatriculaResponsableEntrega()).append("' ");
             // todo - tengo que recuperar los nombres completos
-            queryHelper.agregarParametroValues("FEC_SALIDA", "STR_TO_DATE('" + String.valueOf(valeSalida.getFechaSalida()) + "', '%d-%m-%Y')");
+//            queryHelper.agregarParametroValues("FEC_SALIDA", "STR_TO_DATE('" + String.valueOf(valeSalida.getFechaEntrada()) + "', '%d-%m-%Y')");
             // todo - verificar que los nombres y matricula sean correctos, verificar que solo sean esos datos los que se van a estar guardando
-            queryHelper.agregarParametroValues("NOM_RESPONSABLE", "'" + String.valueOf(valeSalida.getCantidadArticulos()) + "'");
-            queryHelper.agregarParametroValues("CVE_MATRICULA_RESPONSABLE", "'" + valeSalida.getCantidadArticulos() + "'");
+//            queryHelper.agregarParametroValues("NOM_RESPON_ENTREGA", "'" + String.valueOf(valeSalida.getCantidadArticulos()) + "'");
+//            queryHelper.agregarParametroValues("CVE_MATRICULA_RESPON", "'" + valeSalida.getCantidadArticulos() + "'");
             // fecha actualizacion
             // usuario que modifica
 
             // modificar tambien el detalle
+        } else {
+            queryBuilder.append("CAN_ARTICULOS = ").append(valeSalida.getCantidadArticulos()).append(" ");
         }
-        queryHelper.agregarParametroValues("ID_USUARIO_MODIFICA", idUsuario.toString());
-        queryHelper.agregarParametroValues("FEC_ACTUALIZACION", "CURRENT_TIMESTAMP");
+//        queryHelper.agregarParametroValues("ID_USUARIO_MODIFICA", String.valueOf(idUsuario));
+//        queryHelper.agregarParametroValues("FEC_ACTUALIZACION", "CURRENT_TIMESTAMP");
 
-        queryHelper.addWhere("ID_VALESALIDA = " + valeSalida.getIdValeSalida());
+//        queryHelper.addWhere("ID_VALESALIDA = " + valeSalida.getIdValeSalida());
 //        else {
 //            // se modifican solo los articulos
 //        }
-        String query = queryHelper.obtenerQueryActualizar();
+        queryBuilder.append("WHERE ID_VALESALIDA = ").append(valeSalida.getIdValeSalida());
+        String query = queryBuilder.toString();
         DatosRequest datos = new DatosRequest();
         Map<String, Object> parametros = new HashMap<>();
         parametros.put(AppConstantes.QUERY, getBinary(query));
@@ -566,7 +590,7 @@ public class ValeSalida {
      * @param idValeSalida
      * @return
      */
-    public DatosRequest cambiarEstatus(Long idValeSalida) {
+    public DatosRequest cambiarEstatus(Long idValeSalida, Integer idUsuario) {
         StringBuilder queryBuilder = new StringBuilder("UPDATE SVT_VALE_SALIDA ");
         queryBuilder.append("SET ID_ESTATUS = 0 ")
                 .append("WHERE ID_VALESALIDA = ").append(idValeSalida);
