@@ -25,12 +25,17 @@ import java.util.*;
 @Slf4j
 public class ValeSalida {
 
-    private final static int TIPO_SERVICIO_RENTA_EQUIPO = 2;
-    private final static String CURRENT_TIMESTAMP = "CURRENT_TIMESTAMP";
-    private final static int ESTATUS_ODS_GENERADA = 2;
-    private final static int ESTATUS_ELIMINADA = 0;
-    private final static int ESTATUS_SALIDA = 1;
-    private final static int ESTATUS_ENTRADA = 2;
+    private static final int TIPO_SERVICIO_RENTA_EQUIPO = 2;
+    private static final String CURRENT_TIMESTAMP = "CURRENT_TIMESTAMP";
+    private static final int ESTATUS_ODS_GENERADA = 2;
+    private static final int ESTATUS_ELIMINADA = 0;
+    private static final int ESTATUS_SALIDA = 1;
+    private static final int ESTATUS_ENTRADA = 2;
+    // todo - agregar campos para las tablas y usarlos como constantes
+    // campos vale_salida, ver como se acomoda mejor usarlos
+//    private static final String ID_VALE_SALIDA = "vs.ID_VALE_SALIDA as idValeSalida";
+    private static final String ID_VALE_SALIDA = "ID_VALE_SALIDA";
+    private static final String FOLIO_ODS = "CVE_FOLIO";
     private final Gson gson;
 
     public ValeSalida() {
@@ -126,7 +131,6 @@ public class ValeSalida {
                 .append("WHERE ID_VALESALIDA = ").append(idValeSalida)
                 .append(" AND ID_ESTATUS = ").append(ESTATUS_SALIDA);
 
-//        String query = "UPDATE SVT_VALE_SALIDADETALLE set ID_ESTATUS = " + estatus + " WHERE ID_VALESALIDA = " + idValeSalida + " AND ID_ESTATUS = 1";
         String query = queryBuilder.toString();
 
         Map<String, Object> parametros = new HashMap<>();
@@ -136,8 +140,6 @@ public class ValeSalida {
 
         return datos;
     }
-
-    // consultar vales de salid
 
     /**
      * Consulta los vales de salida generados, recupera la informaci&oacute;n del Vale de salida, as&iacute; como
@@ -199,8 +201,6 @@ public class ValeSalida {
         request.getDatos().remove(AppConstantes.DATOS);
         return request;
     }
-
-    // consultar datos de la ods nombre contratante, nombre responsable y nombre finado
 
     /**
      * Consulta los datos de la ODS, consulta tambi&eacute;n la lista de art&iacute;culos disponibles para ese
@@ -290,14 +290,14 @@ public class ValeSalida {
 
         QueryHelper queryHelper = new QueryHelper("INSERT INTO SVT_VALE_SALIDA");
         queryHelper.agregarParametroValues("ID_VELATORIO", String.valueOf(valeSalida.getIdVelatorio()));
-        // todo - como se va a crear el folio del vale de salida
-//        queryHelper.agregarParametroValues("CVE_FOLIO", valeSalida.getFolioValeSalida());
         queryHelper.agregarParametroValues("ID_ORDEN_SERVICIO", String.valueOf(valeSalida.getIdOds()));
-        queryHelper.agregarParametroValues("FEC_SALIDA", "STR_TO_DATE('" + String.valueOf(valeSalida.getFechaSalida()) + "', '%d-%m-%Y')");
-//        queryHelper.agregarParametroValues("CVE_MATRICULA_RESPON", String.valueOf(valeSalida.getMatriculaResponsableEntrega()));
-        queryHelper.agregarParametroValues("NOM_RESPON_INSTA", "'" + String.valueOf(valeSalida.getNombreResponsableInstalacion()) + "'");
-        queryHelper.agregarParametroValues("NOM_RESPEQUIVELACION", "'" + String.valueOf(valeSalida.getNombreResponsableEquipoVelacion()) + "'");
-        queryHelper.agregarParametroValues("CVE_MATRICULARESPEQUIVELACION", "'" + String.valueOf(valeSalida.getMatriculaResponsableEquipoVelacion()) + "'");
+        queryHelper.agregarParametroValues("FEC_SALIDA", "STR_TO_DATE('" + valeSalida.getFechaSalida() + "', '%d-%m-%Y')");
+        queryHelper.agregarParametroValues("NOM_RESPON_INSTA", "'" + valeSalida.getNombreResponsableInstalacion() + "'");
+        queryHelper.agregarParametroValues("CVE_MATRICULA_RESINST", valeSalida.getMatriculaResponsableInstalacion());
+        queryHelper.agregarParametroValues("NOM_RESPEQUIVELACION", "'" + valeSalida.getNombreResponsableEquipoVelacion() + "'");
+        queryHelper.agregarParametroValues("CVE_MATRICULARESPEQUIVELACION", "'" + valeSalida.getMatriculaResponsableEquipoVelacion() + "'");
+
+        queryHelper.agregarParametroValues("NUM_DIA_NOVENARIO", String.valueOf(valeSalida.getDiasNovenario()));
 
         queryHelper.agregarParametroValues("CAN_ARTICULOS", String.valueOf(valeSalida.getCantidadArticulos()));
 
@@ -348,6 +348,7 @@ public class ValeSalida {
 
     /**
      * Actualiza los detalles de los vales de salida
+     *
      * @param articulos
      * @param idValeSalida
      * @return
@@ -431,6 +432,7 @@ public class ValeSalida {
 
     /**
      * Agrega un nuevo registro al Vale de Salida que se est&eacute; modificando
+     *
      * @param articulo
      * @param estatus
      * @return
