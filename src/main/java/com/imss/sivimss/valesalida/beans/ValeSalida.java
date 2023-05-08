@@ -301,7 +301,8 @@ public class ValeSalida {
 
         queryHelper.agregarParametroValues("CAN_ARTICULOS", String.valueOf(valeSalida.getCantidadArticulos()));
 
-        queryHelper.agregarParametroValues("ID_ESTATUS", "1");
+        queryHelper.agregarParametroValues("ID_ESTATUS", String.valueOf(ESTATUS_SALIDA));
+
         queryHelper.agregarParametroValues("ID_USUARIO_ALTA", String.valueOf(usuarioDto.getIdUsuario()));
         queryHelper.agregarParametroValues("FEC_ALTA", CURRENT_TIMESTAMP);
 
