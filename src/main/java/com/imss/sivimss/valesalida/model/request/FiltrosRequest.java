@@ -11,6 +11,7 @@ public class FiltrosRequest {
     private Long idNivel;
     private Long idDelegacion;
     private Long idVelatorio;
+    private Long idValeSalida;
     private String folioOds;
     private String fechaInicio;
     private String fechaFinal;
@@ -25,6 +26,7 @@ public class FiltrosRequest {
         return idNivel == null &&
                 idDelegacion == null &&
                 idVelatorio == null &&
+                idValeSalida == null &&
                 folioOds == null &&
                 fechaInicio == null && fechaFinal == null;
     }

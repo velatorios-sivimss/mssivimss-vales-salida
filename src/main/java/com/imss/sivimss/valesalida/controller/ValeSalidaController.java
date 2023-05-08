@@ -145,7 +145,7 @@ public class ValeSalidaController {
     @TimeLimiter(name = "msflujo")
     @PostMapping("/descargar-reporte-tabla")
     public CompletableFuture<?> descargarReporteTabla(@RequestBody DatosRequest request, Authentication authentication) throws IOException, ParseException {
-        Response<?> response = valeSalidaService.generarReportePdf(request, authentication);
+        Response<?> response = valeSalidaService.generarReporteTabla(request, authentication);
         return CompletableFuture
                 .supplyAsync(() -> new ResponseEntity<>(response, HttpStatus.valueOf(response.getCodigo())));
     }

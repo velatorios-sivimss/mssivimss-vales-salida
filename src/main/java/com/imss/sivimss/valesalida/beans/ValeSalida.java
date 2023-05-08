@@ -25,6 +25,12 @@ import java.util.*;
 @Slf4j
 public class ValeSalida {
 
+    private final static int TIPO_SERVICIO_RENTA_EQUIPO = 2;
+    private final static String CURRENT_TIMESTAMP = "CURRENT_TIMESTAMP";
+    private final static int ESTATUS_ODS_GENERADA = 2;
+    private final static int ESTATUS_ELIMINADA = 0;
+    private final static int ESTATUS_SALIDA = 1;
+    private final static int ESTATUS_ENTRADA = 2;
     private final Gson gson;
 
     public ValeSalida() {
@@ -39,7 +45,6 @@ public class ValeSalida {
      * @return
      */
     public DatosRequest consultar(long id, Integer idDelegacion) {
-        // todo - revisar que funcione correctamente
         SelectQueryUtil queryUtil = new SelectQueryUtil();
         queryUtil.select("vs.ID_VALESALIDA as idValeSalida",
                         "vs.CVE_FOLIO as folioValeSalida",
@@ -60,7 +65,6 @@ public class ValeSalida {
                         "vs.NOM_RESPON_ENTREGA as nombreResponsableEntrega",
                         "vs.CVE_MATRICULA_RESPON as matriculaResponsableEntrega",
                         "vs.CAN_ARTICULOS as totalArticulos",
-                        // todo - refactor, hay que cambiar de donde sale la direccion
                         "domicilio.DES_CALLE as calle",
                         "domicilio.NUM_EXTERIOR as numExt",
                         "domicilio.NUM_INTERIOR as numInt",
@@ -107,26 +111,6 @@ public class ValeSalida {
         return datos;
     }
 
-//    public DatosRequest consultarProductos(long idVelatorio) {
-//        SelectQueryUtil queryUtil = new SelectQueryUtil();
-//        // todo - mover el tipo de servicio a una constante tipo de servicio 2 - Renta de equipo
-//        queryUtil.select("ID_ARTICULO as idArticulo",
-//                        "a.DES_ARTICULO as nombreArticulo",
-//                        "inventario.CAN_STOCK as cantidad")
-//                .from("SVT_INVENTARIO inventario")
-//                .join("SVT_ARTICULO a", "a.ID_ARTICULO = inventario.ID_ARTICULO")
-//                .where("inventario.ID_TIPO_SERVICIO = :idTipoServicio",
-//                        "inventario.ID_VELATORIO = :idVelatorio")
-//                .setParameter("idTipoServicio", 2)
-//                .setParameter("idVelatorio", idVelatorio);
-//        String query = getQuery(queryUtil);
-//        Map<String, Object> parametros = new HashMap<String, Object>();
-//        parametros.put(AppConstantes.QUERY, getBinary(query));
-//        DatosRequest datos = new DatosRequest();
-//        datos.setDatos(parametros);
-//        return datos;
-//    }
-
     /**
      * Elimina los productos de un vale de salida
      *
@@ -135,13 +119,12 @@ public class ValeSalida {
      */
     public DatosRequest cambiarEstatusDetalleValeSalida(Long idValeSalida, Integer idUsuario, int estatus) {
 
-        // todo - pasar tambien la parte del usuario
         StringBuilder queryBuilder = new StringBuilder("UPDATE SVT_VALE_SALIDADETALLE SET ");
         queryBuilder.append("ID_ESTATUS = ").append(estatus).append(", ")
                 .append("ID_USUARIO_MODIFICA = ").append(idUsuario).append(", ")
-                .append("FEC_ACTUALIZACION = ").append("CURRENT_TIMESTAMP").append(" ")
+                .append("FEC_ACTUALIZACION = ").append(CURRENT_TIMESTAMP).append(" ")
                 .append("WHERE ID_VALESALIDA = ").append(idValeSalida)
-                .append(" AND ID_ESTATUS = 1");
+                .append(" AND ID_ESTATUS = ").append(ESTATUS_SALIDA);
 
 //        String query = "UPDATE SVT_VALE_SALIDADETALLE set ID_ESTATUS = " + estatus + " WHERE ID_VALESALIDA = " + idValeSalida + " AND ID_ESTATUS = 1";
         String query = queryBuilder.toString();
@@ -157,7 +140,6 @@ public class ValeSalida {
     // consultar vales de salid
 
     /**
-     * todo - probar que funcione correctamente
      * Consulta los vales de salida generados, recupera la informaci&oacute;n del Vale de salida, as&iacute; como
      * el detalle que representa la lista de art&iacute;culos asociada al Vale de Salida
      *
@@ -181,9 +163,7 @@ public class ValeSalida {
                         "vs.ID_ESTATUS as idEstatus",
                         "vs.NUM_DIA_NOVENARIO as diasNovenario",
                         "vs.NOM_RESPON_INSTA as nombreResponsableInstalacion",
-//                        "vs.CVE_MATRICULA_RESPON as matriculaResponsableInstalacion",
-//                        "vs.NOM_RESPEQUIVELACION as nombreResponsableEquipo",
-//                        "vs.CVE_MATRICULARESPEQUIVELACION as matriculaResponsableEquipo",
+                        "vs.CAN_ARTICULOS as totalArticulos",
                         "CONCAT(perContratante.NOM_PERSONA, ' ', perContratante.NOM_PRIMER_APELLIDO, ' ', perContratante.NOM_SEGUNDO_APELLIDO) as nombreContratante")
                 .from("SVT_VALE_SALIDA vs")
                 .join("SVC_VELATORIO v", "vs.ID_VELATORIO = v.ID_VELATORIO")
@@ -267,11 +247,11 @@ public class ValeSalida {
                 .join("SVC_CP cp", "cp.ID_CODIGO_POSTAL = domicilio.ID_CP")
                 .join("SVT_INVENTARIO inventario",
                         "inventario.ID_VELATORIO = v.ID_VELATORIO",
-                        "inventario.ID_TIPO_SERVICIO = 2");
+                        "inventario.ID_TIPO_SERVICIO = " + TIPO_SERVICIO_RENTA_EQUIPO);
 
         queryUtil.where(
                         "ods.CVE_FOLIO = :folioOds",
-                        "ods.ID_ESTATUS_ORDEN_SERVICIO = 2",
+                        "ods.ID_ESTATUS_ORDEN_SERVICIO = " + ESTATUS_ODS_GENERADA,
                         "d.ID_DELEGACION = :idDelegacion",
                         "v.ID_VELATORIO = :idVelatorio")
                 .setParameter("folioOds", request.getFolioOds())
@@ -297,13 +277,8 @@ public class ValeSalida {
         return datos;
     }
 
-    // crear vale de salida
-    //   - crear el registro en la tabla vale de salida
-    //   - hay que crear tambien un registro por cada articulo que se agregue en el registro
-    //   - hay que descontar la cantidad de articulos del inventario
-
     /**
-     * Craa un registro para el vale de salida con su respectivo detalle
+     * Crea un registro para el vale de salida con su respectivo detalle
      *
      * @param valeSalida
      * @param usuarioDto
@@ -319,19 +294,16 @@ public class ValeSalida {
 //        queryHelper.agregarParametroValues("CVE_FOLIO", valeSalida.getFolioValeSalida());
         queryHelper.agregarParametroValues("ID_ORDEN_SERVICIO", String.valueOf(valeSalida.getIdOds()));
         queryHelper.agregarParametroValues("FEC_SALIDA", "STR_TO_DATE('" + String.valueOf(valeSalida.getFechaSalida()) + "', '%d-%m-%Y')");
-//        queryHelper.agregarParametroValues("NOM_RESPON_ENTREGA", String.valueOf(valeSalida.getNombreResponsableEntrega()));
 //        queryHelper.agregarParametroValues("CVE_MATRICULA_RESPON", String.valueOf(valeSalida.getMatriculaResponsableEntrega()));
         queryHelper.agregarParametroValues("NOM_RESPON_INSTA", "'" + String.valueOf(valeSalida.getNombreResponsableInstalacion()) + "'");
-        // todo - falta la matricula del responsable de la instalacion
         queryHelper.agregarParametroValues("NOM_RESPEQUIVELACION", "'" + String.valueOf(valeSalida.getNombreResponsableEquipoVelacion()) + "'");
         queryHelper.agregarParametroValues("CVE_MATRICULARESPEQUIVELACION", "'" + String.valueOf(valeSalida.getMatriculaResponsableEquipoVelacion()) + "'");
 
-        // voy a tener que calcular este valor
         queryHelper.agregarParametroValues("CAN_ARTICULOS", String.valueOf(valeSalida.getCantidadArticulos()));
 
         queryHelper.agregarParametroValues("ID_ESTATUS", "1");
         queryHelper.agregarParametroValues("ID_USUARIO_ALTA", String.valueOf(usuarioDto.getIdUsuario()));
-        queryHelper.agregarParametroValues("FEC_ALTA", "CURRENT_TIMESTAMP");
+        queryHelper.agregarParametroValues("FEC_ALTA", CURRENT_TIMESTAMP);
 
         final List<DetalleValeSalidaRequest> articulos = valeSalida.getArticulos();
 
@@ -350,7 +322,7 @@ public class ValeSalida {
     }
 
     /**
-     * Crea los resgistros del detalle del Vale de salida, para que se pueda hacer la relaci&oacute;n entre
+     * Crea los registros del detalle del Vale de salida, para que se pueda hacer la relaci&oacute;n entre
      * Vale de Salida y su Detalle.
      *
      * @param articulos
@@ -374,6 +346,12 @@ public class ValeSalida {
         return query.toString();
     }
 
+    /**
+     * Actualiza los detalles de los vales de salida
+     * @param articulos
+     * @param idValeSalida
+     * @return
+     */
     public DatosRequest actualizarDetalleVale(List<DetalleValeSalidaRequest> articulos, Long idValeSalida) {
         StringBuilder query = new StringBuilder();
         for (DetalleValeSalidaRequest detalleValeSalida : articulos) {
@@ -389,14 +367,12 @@ public class ValeSalida {
     }
 
     public List<String> generarQueries(String... queries) {
-        // todo - hay que pasar el arrya a una lista
 
         Map<String, Object> parametros = new HashMap<>();
         final List<String> updates = Arrays.asList(queries);
         parametros.put("updates", updates.stream().map(ValeSalida::getBinary));
 
         final DatosRequest datosRequest = new DatosRequest();
-        // regresar la un dto con un parametro que sea la lista de updates
         return updates;
     }
 
@@ -408,44 +384,19 @@ public class ValeSalida {
      * @return
      */
     public DatosRequest modificarVale(ValeSalidaDto valeSalida, Integer idUsuario, boolean registrarEntrada) {
-        // todo - agregar solo los campos que se puedan modificar
-        // que es lo que se va a modificar en esta parte?
-        //
         StringBuilder queryBuilder = new StringBuilder("UPDATE SVT_VALE_SALIDA ");
         queryBuilder.append("SET ")
                 .append("ID_USUARIO_MODIFICA = ").append(idUsuario).append(", ")
-                .append("FEC_ACTUALIZACION = ").append("CURRENT_TIMESTAMP, ");
+                .append("FEC_ACTUALIZACION = ").append(CURRENT_TIMESTAMP).append(", ");
 
-//        queryHelper.addWhere("ID_VALESALIDA = " + valeSalida.getIdValeSalida());
-//        QueryHelper queryHelper = new QueryHelper("UPDATE SVT_VALE_SALIDA");
-//        queryHelper.agregarParametroValues("CAN_ARTICULOS", String.valueOf(valeSalida.getCantidadArticulos()));
-        // todo - hacer la logica para la entrada de articulos
-        // se registran nombres de los responsables
-        // todo - recuperar los nombres de los responsables y la matricula
         if (registrarEntrada) {
             queryBuilder.append("FEC_ENTRADA = ").append("STR_TO_DATE('").append(valeSalida.getFechaEntrada()).append("', '%d-%m-%Y'), ")
                     .append("NOM_RESPON_ENTREGA = ").append("'").append(valeSalida.getNombreResponsableEntrega()).append("', ")
                     .append("ID_ESTATUS = ").append(2).append(", ")
                     .append("CVE_MATRICULA_RESPON = ").append("'").append(valeSalida.getMatriculaResponsableEntrega()).append("' ");
-            // todo - tengo que recuperar los nombres completos
-//            queryHelper.agregarParametroValues("FEC_SALIDA", "STR_TO_DATE('" + String.valueOf(valeSalida.getFechaEntrada()) + "', '%d-%m-%Y')");
-            // todo - verificar que los nombres y matricula sean correctos, verificar que solo sean esos datos los que se van a estar guardando
-//            queryHelper.agregarParametroValues("NOM_RESPON_ENTREGA", "'" + String.valueOf(valeSalida.getCantidadArticulos()) + "'");
-//            queryHelper.agregarParametroValues("CVE_MATRICULA_RESPON", "'" + valeSalida.getCantidadArticulos() + "'");
-            // fecha actualizacion
-            // usuario que modifica
-
-            // modificar tambien el detalle
         } else {
             queryBuilder.append("CAN_ARTICULOS = ").append(valeSalida.getCantidadArticulos()).append(" ");
         }
-//        queryHelper.agregarParametroValues("ID_USUARIO_MODIFICA", String.valueOf(idUsuario));
-//        queryHelper.agregarParametroValues("FEC_ACTUALIZACION", "CURRENT_TIMESTAMP");
-
-//        queryHelper.addWhere("ID_VALESALIDA = " + valeSalida.getIdValeSalida());
-//        else {
-//            // se modifican solo los articulos
-//        }
         queryBuilder.append("WHERE ID_VALESALIDA = ").append(valeSalida.getIdValeSalida());
         String query = queryBuilder.toString();
         DatosRequest datos = new DatosRequest();
@@ -479,6 +430,7 @@ public class ValeSalida {
     }
 
     /**
+     * Agrega un nuevo registro al Vale de Salida que se est&eacute; modificando
      * @param articulo
      * @param estatus
      * @return
@@ -493,11 +445,17 @@ public class ValeSalida {
 
         // todo - agregar lo de el usuario que actualiza
         queryHelper.agregarParametroValues("ID_USUARIO_ALTA", String.valueOf(idUsuario));
-        queryHelper.agregarParametroValues("FEC_ALTA", "CURRENT_TIMESTAMP");
+        queryHelper.agregarParametroValues("FEC_ALTA", CURRENT_TIMESTAMP);
 
         return getDatosRequest(queryHelper.obtenerQueryInsertar());
     }
 
+    /**
+     * Recupera el objeto que se enviar&aacute; en el request.
+     *
+     * @param string
+     * @return
+     */
     private DatosRequest getDatosRequest(String string) {
         final String query = string;
         DatosRequest datos = new DatosRequest();
@@ -529,46 +487,23 @@ public class ValeSalida {
      * @return
      * @throws ParseException
      */
-    public Map<String, Object> generarReporte(ReporteDto reporteDto) throws ParseException {
-
-
-        // todo - hay que hacer el formato de las fechas para que se puedan imprimir correctamente en el formato
-
-//        String fechaCompleta = reporteDto.getMes() + "-" + reporteDto.getAnio();
-//        Date dateF = new SimpleDateFormat("MMMM-yyyy").parse(fechaCompleta);
-//        DateFormat anioMes = new SimpleDateFormat("yyyy-MM", new Locale("es", "MX"));
-//        String fecha = anioMes.format(dateF);
-//        log.info("estoy en:" + fecha);
+    public Map<String, Object> recuperarDatosFormato(ReporteDto reporteDto) throws ParseException {
         Map<String, Object> parametros = new HashMap<>();
         parametros.put("logoImss", "");
         parametros.put("logoSistema", "");
         parametros.put("idValeSalida", reporteDto.getIdValeSalida());
-//        private Long idOoad;
-//        parametros.put("idOoad", reporteDto.getIdOoad());
-//        parametros.put("idVelatorio", reporteDto.getIdVelatorio());
         parametros.put("nombreDelegacion", reporteDto.getNombreDelegacion());
-//        private Long idVelatorio;
         parametros.put("nombreVelatorio", reporteDto.getNombreVelatorio());
-//        private String nombreResponsableEntrega;
         parametros.put("nombreResponsableEntrega", reporteDto.getNombreResponsableEntrega());
         parametros.put("matriculaResponsableEntrega", reporteDto.getMatriculaResponsableEntrega());
-//        private Integer diasNovenario;
         parametros.put("diasNovenario", reporteDto.getDiasNovenario());
-//        private String folioOds;
         parametros.put("folioOds", reporteDto.getFolioOds());
         parametros.put("fechaSalida", reporteDto.getFechaSalida());
-//        private String fechaActual;
-//        parametros.put("fechaActual", )
-//        private String domicilio;
         parametros.put("domicilio", reporteDto.getDomicilio());
         parametros.put("ciudad", reporteDto.getEstado());
-//        private String nombreResponsableInstalacion;
         parametros.put("nombreResponsableInstalacion", reporteDto.getNombreResponsableInstalacion());
         parametros.put("matriculaResponsableInstalacion", reporteDto.getMatriculaResponsableInstalacion());
-        // pasar los datos para la consulta de la tabla de articulos
-//        private List<DetalleValeSalidaRequest> articulos;
         parametros.put("condition", "WHERE vsd.`ID_VALESALIDA` = " + reporteDto.getIdValeSalida() + " AND vsd.`ID_ESTATUS` = 2");
-//        private String nombreResponsableEquipo;
         parametros.put("nombreResponsableEquipo", reporteDto.getNombreResponsableEquipo());
         parametros.put("matriculaResponsableEquipo", reporteDto.getMatriculaResponsableEquipo());
 
@@ -585,11 +520,31 @@ public class ValeSalida {
         parametros.put("mesFechaEntrega", mes);
         parametros.put("anioFechaEntrega", anio);
         parametros.put("ciudad", reporteDto.getEstado());
-//        private String fechaSalida;
-//        parametros.put("condition", " AND SDC.FEC_ENTRADA LIKE '%" + fecha + "%' AND SV.NOM_VELATORIO = '" + reporteDto.getVelatorio() + "'");
         parametros.put("rutaNombreReporte", reporteDto.getRuta());
         parametros.put("tipoReporte", reporteDto.getTipoReporte());
 
+        return parametros;
+    }
+
+
+    /**
+     * Recupera los datos para poder generar el reporte de la tabla de Vales de Salida
+     *
+     * @param filtros
+     * @return
+     * @throws ParseException
+     */
+    public Map<String, Object> recuperarDatosFormatoTabla(ReporteTablaDto filtros) throws ParseException {
+        final Map<String, Object> parametros = new HashMap<>();
+        StringBuilder condicionBuilder = new StringBuilder();
+        // validar si los filtros son nullos ??
+        parametros.put("rutaNombreReporte", filtros.getRuta());
+        parametros.put("tipoReporte", filtros.getTipoReporte());
+        parametros.put("idValeSalida", filtros.getIdValeSalida());
+        parametros.put("idVelatorio", filtros.getIdVelatorio());
+        parametros.put("folioOds", filtros.getFolioOds());
+        parametros.put("fechaInicio", filtros.getFechaInicio());
+        parametros.put("fechaFin", filtros.getFechaFinal());
         return parametros;
     }
 

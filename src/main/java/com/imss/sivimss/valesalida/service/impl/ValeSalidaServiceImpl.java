@@ -359,7 +359,7 @@ public class ValeSalidaServiceImpl implements ValeSalidaService {
         reporteDto.setFechaSalida(datosValeSalida.getFechaSalida());
         reporteDto.setNombreContratante(datosValeSalida.getNombreContratante());
 
-        Map<String, Object> parametosReporte = valeSalida.generarReporte(reporteDto);
+        Map<String, Object> parametosReporte = valeSalida.recuperarDatosFormato(reporteDto);
 
         return restTemplate.consumirServicioReportes(
                 parametosReporte,
@@ -373,7 +373,19 @@ public class ValeSalidaServiceImpl implements ValeSalidaService {
 
     @Override
     public Response<?> generarReporteTabla(DatosRequest request, Authentication authentication) throws IOException, ParseException {
-        return null;
+
+        ReporteTablaDto filtros = gson.fromJson(
+                String.valueOf(request.getDatos().get(AppConstantes.DATOS)),
+                ReporteTablaDto.class
+        );
+        Map<String, Object> parametrosReporte = valeSalida.recuperarDatosFormatoTabla(filtros);
+        return restTemplate.consumirServicioReportes(
+                parametrosReporte,
+                filtros.getRuta(),
+                filtros.getTipoReporte(),
+                URL_REPORTES,
+                authentication
+        );
     }
 
     /**
