@@ -287,13 +287,13 @@ public class ValeSalida {
     public DatosRequest crearVale(ValeSalidaDto valeSalida, UsuarioDto usuarioDto) {
         DatosRequest datos = new DatosRequest();
         Map<String, Object> parametros = new HashMap<>();
-
+        // todo - valida que los campos que se van a insertar no vayan nullos
         QueryHelper queryHelper = new QueryHelper("INSERT INTO SVT_VALE_SALIDA");
         queryHelper.agregarParametroValues("ID_VELATORIO", String.valueOf(valeSalida.getIdVelatorio()));
         queryHelper.agregarParametroValues("ID_ORDEN_SERVICIO", String.valueOf(valeSalida.getIdOds()));
         queryHelper.agregarParametroValues("FEC_SALIDA", "STR_TO_DATE('" + valeSalida.getFechaSalida() + "', '%d-%m-%Y')");
         queryHelper.agregarParametroValues("NOM_RESPON_INSTA", "'" + valeSalida.getNombreResponsableInstalacion() + "'");
-        queryHelper.agregarParametroValues("CVE_MATRICULA_RESINST", valeSalida.getMatriculaResponsableInstalacion());
+        queryHelper.agregarParametroValues("CVE_MATRICULA_RESINST", "'" + valeSalida.getMatriculaResponsableInstalacion() + "'");
         queryHelper.agregarParametroValues("NOM_RESPEQUIVELACION", "'" + valeSalida.getNombreResponsableEquipoVelacion() + "'");
         queryHelper.agregarParametroValues("CVE_MATRICULARESPEQUIVELACION", "'" + valeSalida.getMatriculaResponsableEquipoVelacion() + "'");
 
@@ -313,7 +313,7 @@ public class ValeSalida {
             // todo - recuperar el mensaje del catalogo
             throw new BadRequestException(HttpStatus.BAD_REQUEST, "La lista de articulos no puede estar vacia");
         }
-        String queriesArticulos = crearDetalleVale(articulos, null);
+        String queriesArticulos = crearDetalleVale(articulos);
         String query = queryHelper.obtenerQueryInsertar() + queriesArticulos;
         parametros.put(AppConstantes.QUERY, getBinary(query));
         parametros.put("separador", "$$");
@@ -329,45 +329,28 @@ public class ValeSalida {
      * @param articulos
      * @return
      */
-    private String crearDetalleVale(List<DetalleValeSalidaRequest> articulos, Long idValeSalida) {
+    private String crearDetalleVale(List<DetalleValeSalidaRequest> articulos) {
         // todo - recuperar el idUsuario, para pasarlo tambien en este metodo
         StringBuilder query = new StringBuilder();
         for (DetalleValeSalidaRequest detalleValeSalida : articulos) {
             QueryHelper queryHelper = new QueryHelper("INSERT INTO SVT_VALE_SALIDADETALLE");
-            final boolean isIdValeSalida = idValeSalida != null;
-            queryHelper.agregarParametroValues("ID_VALESALIDA", isIdValeSalida ? String.valueOf(idValeSalida) : "idTabla");
+            queryHelper.agregarParametroValues("ID_VALESALIDA", "idTabla");
+//            queryHelper.agregarParametroValues("ID_VALESALIDA", isIdValeSalida ? String.valueOf(idValeSalida) : "idTabla");
             queryHelper.agregarParametroValues("ID_INVENTARIO", String.valueOf(detalleValeSalida.getIdInventario()));
             queryHelper.agregarParametroValues("CAN_ARTICULOS", String.valueOf(detalleValeSalida.getCantidad()));
             queryHelper.agregarParametroValues("DES_OBSERVACION", "'" + detalleValeSalida.getObservaciones() + "'");
             queryHelper.agregarParametroValues("ID_ESTATUS", "1");
-            if (!isIdValeSalida) {
-                query.append(" $$ ").append(queryHelper.obtenerQueryInsertar());
-            }
+            query.append(" $$ ").append(queryHelper.obtenerQueryInsertar());
         }
         return query.toString();
     }
 
     /**
-     * Actualiza los detalles de los vales de salida
+     * www
      *
-     * @param articulos
-     * @param idValeSalida
+     * @param queries
      * @return
      */
-    public DatosRequest actualizarDetalleVale(List<DetalleValeSalidaRequest> articulos, Long idValeSalida) {
-        StringBuilder query = new StringBuilder();
-        for (DetalleValeSalidaRequest detalleValeSalida : articulos) {
-            QueryHelper queryHelper = new QueryHelper("INSERT INTO SVT_VALE_SALIDADETALLE");
-            queryHelper.agregarParametroValues("ID_VALESALIDA", idValeSalida != null ? String.valueOf(idValeSalida) : "idTabla");
-            queryHelper.agregarParametroValues("ID_ARTICULO", String.valueOf(detalleValeSalida.getIdInventario()));
-            queryHelper.agregarParametroValues("CAN_ARTICULOS", String.valueOf(detalleValeSalida.getCantidad()));
-            queryHelper.agregarParametroValues("DES_OBSERVACION", "'" + detalleValeSalida.getObservaciones() + "'");
-            query.append(" $$ ").append(queryHelper.obtenerQueryInsertar());
-        }
-        final DatosRequest datosRequest = new DatosRequest();
-        return datosRequest;
-    }
-
     public List<String> generarQueries(String... queries) {
 
         Map<String, Object> parametros = new HashMap<>();
@@ -446,7 +429,6 @@ public class ValeSalida {
         queryHelper.agregarParametroValues("DES_OBSERVACION", "'" + articulo.getObservaciones() + "'");
         queryHelper.agregarParametroValues("ID_ESTATUS", String.valueOf(estatus));
 
-        // todo - agregar lo de el usuario que actualiza
         queryHelper.agregarParametroValues("ID_USUARIO_ALTA", String.valueOf(idUsuario));
         queryHelper.agregarParametroValues("FEC_ALTA", CURRENT_TIMESTAMP);
 
@@ -539,8 +521,6 @@ public class ValeSalida {
      */
     public Map<String, Object> recuperarDatosFormatoTabla(ReporteTablaDto filtros) throws ParseException {
         final Map<String, Object> parametros = new HashMap<>();
-        StringBuilder condicionBuilder = new StringBuilder();
-        // validar si los filtros son nullos ??
         parametros.put("rutaNombreReporte", filtros.getRuta());
         parametros.put("tipoReporte", filtros.getTipoReporte());
         parametros.put("idValeSalida", filtros.getIdValeSalida());
