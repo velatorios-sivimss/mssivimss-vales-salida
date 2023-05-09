@@ -236,7 +236,6 @@ public class ValeSalida {
                 .from("SVC_ORDEN_SERVICIO ods")
                 .join("SVC_VELATORIO v")
                 .join("SVC_DELEGACION d", "d.ID_DELEGACION = v.ID_DELEGACION")
-                .join("SVC_DELEGACION d")
                 .join("SVC_FINADO usuFinado",
                         "v.ID_VELATORIO = usuFinado.ID_VELATORIO",
                         "usuFinado.ID_ORDEN_SERVICIO = ods.ID_ORDEN_SERVICIO")
@@ -505,17 +504,22 @@ public class ValeSalida {
 
         parametros.put("nombreContratante", reporteDto.getNombreContratante());
 
-        final SimpleDateFormat dateFormatter = new SimpleDateFormat("dd MMMM yyyy", new Locale("es", "MX"));
-        String fechaFormateada = dateFormatter.format(reporteDto.getFechaEntregaTmp());
-        String[] arregloFechas = fechaFormateada.split(" ");
-        String dia = arregloFechas[0];
-        String mes = arregloFechas[1].toUpperCase();
-        String anio = arregloFechas[2];
-        parametros.put("fechaEntrega", reporteDto.getFechaEntrega());
-        parametros.put("diaFechaEntrega", dia);
-        parametros.put("mesFechaEntrega", mes);
-        parametros.put("anioFechaEntrega", anio);
+        if (reporteDto.getFechaEntrega() != null && !reporteDto.getFechaEntrega().isEmpty()) {
+            final SimpleDateFormat dateFormatter = new SimpleDateFormat("dd MMMM yyyy", new Locale("es", "MX"));
+            String fechaFormateada = dateFormatter.format(reporteDto.getFechaEntregaTmp());
+            String[] arregloFechas = fechaFormateada.split(" ");
+            String dia = arregloFechas[0];
+            String mes = arregloFechas[1].toUpperCase();
+            String anio = arregloFechas[2];
+            parametros.put("fechaEntrega", reporteDto.getFechaEntrega());
+            parametros.put("diaFechaEntrega", dia);
+            parametros.put("mesFechaEntrega", mes);
+            parametros.put("anioFechaEntrega", anio);
+
+        }
+
         parametros.put("ciudad", reporteDto.getEstado());
+
         parametros.put("rutaNombreReporte", reporteDto.getRuta());
         parametros.put("tipoReporte", reporteDto.getTipoReporte());
 
@@ -536,6 +540,7 @@ public class ValeSalida {
         parametros.put("tipoReporte", filtros.getTipoReporte());
         parametros.put("idValeSalida", filtros.getIdValeSalida());
         parametros.put("idVelatorio", filtros.getIdVelatorio());
+        parametros.put("velatorio", filtros.getNombreVelatorio());
         parametros.put("folioOds", filtros.getFolioOds());
         parametros.put("fechaInicio", filtros.getFechaInicio());
         parametros.put("fechaFin", filtros.getFechaFinal());

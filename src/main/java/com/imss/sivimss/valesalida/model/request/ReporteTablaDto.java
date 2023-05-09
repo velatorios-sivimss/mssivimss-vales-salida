@@ -9,6 +9,7 @@ public class ReporteTablaDto {
     // todo - pasar tambien el id delegacion a la consulta
     private Integer idValeSalida;
     private Integer idVelatorio;
+    private String nombreVelatorio;
     private String folioOds;
     private String fechaInicio;
     private String fechaFinal;

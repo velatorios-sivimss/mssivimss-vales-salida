@@ -166,14 +166,7 @@ public class ValeSalidaServiceImpl implements ValeSalidaService {
 
     @Override
     public Response<?> consultarDatosPantallaRegistro(DatosRequest request, Authentication authentication) throws IOException, ParseException {
-        // todo - agregar validacion: siempre deben de llegar el folio, la delegacion y el velatorio
-
-        // todo - se va a usar para ver si tiene el nivel necesario para poder realizar la consulta
-        // hay que recuperar la delegacion del usuario para hacer la consulta
-//        UsuarioDto usuarioDto = gson.fromJson((String) authentication.getPrincipal(), UsuarioDto.class);
-        // todo - retomar la validacion del nivel del usuario para que no se puedan hacer consultas que no correspondan
-        // buscar los id de los roles que correspondan para el caso de uso
-        // validarNivelUsuario(usuarioDto);
+       // validarNivelUsuario(usuarioDto);
 
         ConsultaDatosPantallaRequest valeSalidaRequest = gson.fromJson(
                 String.valueOf(request.getDatos().get(AppConstantes.DATOS)),
@@ -204,23 +197,12 @@ public class ValeSalidaServiceImpl implements ValeSalidaService {
         return respuesta;
     }
 
-//    private void consultarArticulosInventario(long idVelatorio, Authentication authentication) throws IOException {
-//        final DatosRequest datosRequest = valeSalida.consultarProductos(idVelatorio);
-//        restTemplate.consumirServicio(
-//                datosRequest.getDatos(),
-//                URL_DOMINIO_CONSULTA,
-//                authentication
-//        );
-//
-//    }
-
     @Override
     public Response<?> modificarVale(DatosRequest request, Authentication authentication) throws IOException {
         ValeSalidaDto valeSalidaDto = getValeSalida(request.getDatos());
 
         UsuarioDto usuarioDto = gson.fromJson((String) authentication.getPrincipal(), UsuarioDto.class);
         Integer idUsuario = usuarioDto.getIdUsuario();
-        // todo - falta agregar el id del usuario que modifica eliminar
         cambiarEstatusDetalleVale(
                 valeSalidaDto.getIdValeSalida(),
                 idUsuario,
@@ -266,7 +248,6 @@ public class ValeSalidaServiceImpl implements ValeSalidaService {
         ValeSalidaDto valeSalidaDto = getValeSalida(request.getDatos());
         UsuarioDto usuarioDto = gson.fromJson((String) authentication.getPrincipal(), UsuarioDto.class);
         final Integer idUsuario = usuarioDto.getIdUsuario();
-        // todo - cambiar los estatus de los articulos del vale
         final Long idValeSalida = valeSalidaDto.getIdValeSalida();
         final DatosRequest datosRequest = valeSalida.cambiarEstatus(idValeSalida, idUsuario);
         final Response<?> response = restTemplate.consumirServicio(
@@ -284,9 +265,8 @@ public class ValeSalidaServiceImpl implements ValeSalidaService {
     /**
      * Cambia el estatus de un Detalle Vale Salida de acuerdo al estatus que se mande:
      * - 0 - Eliminado
-     * - 1 - Activo
-     * - 2 - Salida
-     * - 3 - Entrada
+     * - 1 - Salida
+     * - 2 - Entrada
      *
      * @param idValeSalida
      * @param authentication
@@ -336,22 +316,6 @@ public class ValeSalidaServiceImpl implements ValeSalidaService {
         final Response<?> response = consultarDetalle(request, authentication);
         ValeSalidaDto datosValeSalida = mapper.convertValue(response.getDatos(), ValeSalidaDto.class);
 
-//        final List<?> listaResponse = (ArrayList<?>) consultarDetalle(request, authentication);
-//        final List<ValeSalidaResponse> listaValeSalidaResponse = new ArrayList<>();
-//        for (Object o : listaResponse) {
-//            ValeSalidaResponse valeSalidaResponse = mapper.convertValue(o, ValeSalidaResponse.class);
-//            listaValeSalidaResponse.add(valeSalidaResponse);
-//        }
-//        final ValeSalidaDto datosValeSalida = response.getDatos();
-        // armar la direccion y los nombres completos de los responsables
-
-        // armar el objeto para mandar al servicio de reportes
-        // hacer una validacion para los campos, bueno no aplica porque solo se necesita del idValeSalida para gernerlo
-//        if (reporteDto.getAnio() == null || reporteDto.getMes() == null || reporteDto.getVelatorio() == null) {
-//            throw new BadRequestException(HttpStatus.BAD_REQUEST, "Falta infomación");
-//        }
-        // consultar los datos para el detalle y pasarlos al reporte para que nada mas los pinte
-        // para la tabla
         reporteDto.setNombreDelegacion(datosValeSalida.getNombreDelegacion());
         reporteDto.setNombreVelatorio(datosValeSalida.getNombreVelatorio());
 
