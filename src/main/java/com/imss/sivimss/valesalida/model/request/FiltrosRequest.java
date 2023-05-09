@@ -23,10 +23,8 @@ public class FiltrosRequest {
      * nulas o no.
      */
     public boolean validarNulos() {
-        return idNivel == null &&
-                idDelegacion == null &&
+        return idDelegacion == null &&
                 idVelatorio == null &&
-                idValeSalida == null &&
                 folioOds == null &&
                 fechaInicio == null && fechaFinal == null;
     }

@@ -57,4 +57,38 @@ public class ValeSalidaDto {
     public String recuperarDomicilio() {
         return calle + " " + numExt + (numInt != null ? numInt + ", " : ", ") + colonia + ", " + municipio + ", " + estado + ", " + cp;
     }
+
+    /**
+     * Realiza la validaci&oacute;n de los datos necesarios para hacer el insert del registro de un vale de salida, no sean
+     * nulos
+     *
+     * @return
+     */
+    public boolean validarDatosInsert() {
+        return idVelatorio == null &&
+                idOds == null &&
+                fechaSalida == null &&
+                nombreResponsableInstalacion == null &&
+                matriculaResponsableInstalacion == null &&
+                nombreResponsableEquipoVelacion == null &&
+                matriculaResponsableEquipoVelacion == null &&
+                diasNovenario == null &&
+                cantidadArticulos == null;
+    }
+
+    /**
+     * Verifica si todos los elementos en el objeto son nulos.
+     *
+     * @return <b>{@code true}</b> o <b>{@code false}</b> dependiendo si todas las propiedades del objeto son
+     * nulas o no.
+     */
+//    public boolean validarNulos() {
+//        return idNivel == null &&
+//                idDelegacion == null &&
+//                idVelatorio == null &&
+//                idValeSalida == null &&
+//                folioOds == null &&
+//                fechaInicio == null && fechaFinal == null;
+//    }
 }
+

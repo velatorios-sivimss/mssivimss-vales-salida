@@ -83,6 +83,12 @@ public class ValeSalidaServiceImpl implements ValeSalidaService {
                     String.valueOf(request.getDatos().get(AppConstantes.DATOS)),
                     ValeSalidaDto.class
             );
+            if (valeSalidaRequest.validarDatosInsert()) {
+                throw new BadRequestException(HttpStatus.BAD_REQUEST, "Datos incorrectos, favor de revisar los datos");
+            }
+            if (valeSalidaRequest.getArticulos().isEmpty()) {
+                throw new BadRequestException(HttpStatus.BAD_REQUEST, "La lista de articulos no puede estar vacia");
+            }
             UsuarioDto usuarioDto = gson.fromJson((String) authentication.getPrincipal(), UsuarioDto.class);
             final DatosRequest datosRequest = valeSalida.crearVale(valeSalidaRequest, usuarioDto);
             response = restTemplate.consumirServicio(
@@ -109,7 +115,12 @@ public class ValeSalidaServiceImpl implements ValeSalidaService {
     @Override
     public Response<?> consultarVales(DatosRequest request, Authentication authentication) throws IOException {
         try {
-            DatosRequest datosRequest = valeSalida.consultarValesSalida(request);
+
+            FiltrosRequest filtros = gson.fromJson(
+                    String.valueOf(request.getDatos().get(AppConstantes.DATOS)),
+                    FiltrosRequest.class
+            );
+            DatosRequest datosRequest = valeSalida.consultarValesSalida(request, filtros);
 
             Response<?> response = restTemplate.consumirServicio(
                     datosRequest.getDatos(),
@@ -168,7 +179,9 @@ public class ValeSalidaServiceImpl implements ValeSalidaService {
                 String.valueOf(request.getDatos().get(AppConstantes.DATOS)),
                 ConsultaDatosPantallaRequest.class
         );
-        // todo - validar que los datos no sean nulos para la consulta
+        if (valeSalidaRequest.validarDatosConsulta()) {
+            throw new BadRequestException(HttpStatus.BAD_REQUEST, "Los datos nos son correctos, favor de revisarlos.");
+        }
         final DatosRequest datosRequest = valeSalida.consultarDatosOds(valeSalidaRequest);
         final Response<?> response = restTemplate.consumirServicio(
                 datosRequest.getDatos(),
@@ -299,7 +312,11 @@ public class ValeSalidaServiceImpl implements ValeSalidaService {
 
     @Override
     public Response<?> consultarCatalogoOds(DatosRequest request, Authentication authentication) throws IOException {
-        final DatosRequest datosRequest = valeSalida.consultarFoliosOds();
+        ConsultaFoliosRequest datosConsulta = gson.fromJson(
+                String.valueOf(request.getDatos().get(AppConstantes.DATOS)),
+                ConsultaFoliosRequest.class
+        );
+        final DatosRequest datosRequest = valeSalida.consultarFoliosOds(datosConsulta);
 
         return restTemplate.consumirServicio(datosRequest.getDatos(),
                 URL_DOMINIO_CONSULTA,

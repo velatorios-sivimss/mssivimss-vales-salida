@@ -78,7 +78,7 @@ public class ValeSalida {
                         "cp.DES_MNPIO as municipio",
                         "cp.CVE_CODIGO_POSTAL as codigoPostal",
                         "dvs.ID_INVENTARIO as idArticulo",
-                        "inventario.DES_ARTICULO as nombreArticulo",
+                        "inventario.NOM_ARTICULO as nombreArticulo",
                         "dvs.CAN_ARTICULOS as cantidadArticulos",
                         "dvs.DES_OBSERVACION as observaciones")
                 .from("SVT_VALE_SALIDA vs")
@@ -100,10 +100,12 @@ public class ValeSalida {
                 .leftJoin("SVT_VALE_SALIDADETALLE dvs",
                         "dvs.ID_VALESALIDA = vs.ID_VALESALIDA", "dvs.ID_ESTATUS = 1").or("dvs.ID_ESTATUS = 2")
                 .join("SVT_INVENTARIO inventario", "dvs.ID_INVENTARIO = inventario.ID_INVENTARIO");
+
         queryUtil.where("vs.ID_VALESALIDA = :idValeSalida",
                         "vs.ID_ESTATUS <> 0")
                 .setParameter("idValeSalida", id)
-                .setParameter("idDelegacion", idDelegacion);
+                .setParameter("idDelegacion", idDelegacion)
+                .groupBy("dvs.ID_INVENTARIO");
 
         String query = getQuery(queryUtil);
         final String encoded = getBinary(query);
@@ -146,13 +148,14 @@ public class ValeSalida {
      * el detalle que representa la lista de art&iacute;culos asociada al Vale de Salida
      *
      * @param request Filtros para hacer la consulta de los vales de salida de acuerdo a los filtros especificados
+     * @param filtros
      * @return
      */
-    public DatosRequest consultarValesSalida(DatosRequest request) {
-        FiltrosRequest filtros = gson.fromJson(
-                String.valueOf(request.getDatos().get(AppConstantes.DATOS)),
-                FiltrosRequest.class
-        );
+    public DatosRequest consultarValesSalida(DatosRequest request, FiltrosRequest filtros) {
+//        FiltrosRequest filtros = gson.fromJson(
+//                String.valueOf(request.getDatos().get(AppConstantes.DATOS)),
+//                FiltrosRequest.class
+//        );
         SelectQueryUtil queryUtil = new SelectQueryUtil();
 
         queryUtil.select("ID_VALESALIDA as idValeSalida",
@@ -192,6 +195,7 @@ public class ValeSalida {
                             .setParameter("fechaFin", filtros.getFechaFinal());
                 } else {
                     // todo - mandar el error de la validacion de las fechas pero hay que hacer la validacion en el servicio
+                    throw new BadRequestException(HttpStatus.BAD_REQUEST, "Enviar mensaje de las fechas");
                 }
             }
         }
@@ -210,7 +214,6 @@ public class ValeSalida {
      * @return
      */
     public DatosRequest consultarDatosOds(ConsultaDatosPantallaRequest request) {
-        // todo - validar que los campos no sean nulos
         SelectQueryUtil queryUtil = new SelectQueryUtil();
         queryUtil.select(
                         "v.ID_VELATORIO as idVelatorio",
@@ -232,7 +235,7 @@ public class ValeSalida {
                         "inventario.CAN_STOCK as cantidadArticulos")
                 .from("SVC_ORDEN_SERVICIO ods")
                 .join("SVC_VELATORIO v")
-//                .join("SVC_DELEGACION d", "d.ID_DELEGACION = v.ID_DELEGACION")
+                .join("SVC_DELEGACION d", "d.ID_DELEGACION = v.ID_DELEGACION")
                 .join("SVC_DELEGACION d")
                 .join("SVC_FINADO usuFinado",
                         "v.ID_VELATORIO = usuFinado.ID_VELATORIO",
@@ -287,7 +290,9 @@ public class ValeSalida {
     public DatosRequest crearVale(ValeSalidaDto valeSalida, UsuarioDto usuarioDto) {
         DatosRequest datos = new DatosRequest();
         Map<String, Object> parametros = new HashMap<>();
-        // todo - valida que los campos que se van a insertar no vayan nullos
+        final Integer idUsuario = usuarioDto.getIdUsuario();
+        final List<DetalleValeSalidaRequest> articulos = valeSalida.getArticulos();
+
         QueryHelper queryHelper = new QueryHelper("INSERT INTO SVT_VALE_SALIDA");
         queryHelper.agregarParametroValues("ID_VELATORIO", String.valueOf(valeSalida.getIdVelatorio()));
         queryHelper.agregarParametroValues("ID_ORDEN_SERVICIO", String.valueOf(valeSalida.getIdOds()));
@@ -303,17 +308,10 @@ public class ValeSalida {
 
         queryHelper.agregarParametroValues("ID_ESTATUS", String.valueOf(ESTATUS_SALIDA));
 
-        queryHelper.agregarParametroValues("ID_USUARIO_ALTA", String.valueOf(usuarioDto.getIdUsuario()));
+        queryHelper.agregarParametroValues("ID_USUARIO_ALTA", String.valueOf(idUsuario));
         queryHelper.agregarParametroValues("FEC_ALTA", CURRENT_TIMESTAMP);
 
-        final List<DetalleValeSalidaRequest> articulos = valeSalida.getArticulos();
-
-        // todo - mover esta validacon al servicio
-        if (articulos.isEmpty()) {
-            // todo - recuperar el mensaje del catalogo
-            throw new BadRequestException(HttpStatus.BAD_REQUEST, "La lista de articulos no puede estar vacia");
-        }
-        String queriesArticulos = crearDetalleVale(articulos);
+        String queriesArticulos = crearDetalleVale(articulos, idUsuario);
         String query = queryHelper.obtenerQueryInsertar() + queriesArticulos;
         parametros.put(AppConstantes.QUERY, getBinary(query));
         parametros.put("separador", "$$");
@@ -329,17 +327,19 @@ public class ValeSalida {
      * @param articulos
      * @return
      */
-    private String crearDetalleVale(List<DetalleValeSalidaRequest> articulos) {
-        // todo - recuperar el idUsuario, para pasarlo tambien en este metodo
+    private String crearDetalleVale(List<DetalleValeSalidaRequest> articulos, Integer idUsuario) {
         StringBuilder query = new StringBuilder();
         for (DetalleValeSalidaRequest detalleValeSalida : articulos) {
             QueryHelper queryHelper = new QueryHelper("INSERT INTO SVT_VALE_SALIDADETALLE");
             queryHelper.agregarParametroValues("ID_VALESALIDA", "idTabla");
-//            queryHelper.agregarParametroValues("ID_VALESALIDA", isIdValeSalida ? String.valueOf(idValeSalida) : "idTabla");
             queryHelper.agregarParametroValues("ID_INVENTARIO", String.valueOf(detalleValeSalida.getIdInventario()));
             queryHelper.agregarParametroValues("CAN_ARTICULOS", String.valueOf(detalleValeSalida.getCantidad()));
             queryHelper.agregarParametroValues("DES_OBSERVACION", "'" + detalleValeSalida.getObservaciones() + "'");
-            queryHelper.agregarParametroValues("ID_ESTATUS", "1");
+
+            queryHelper.agregarParametroValues("ID_USUARIO_ALTA", String.valueOf(idUsuario));
+            queryHelper.agregarParametroValues("FEC_ALTA", CURRENT_TIMESTAMP);
+
+            queryHelper.agregarParametroValues("ID_ESTATUS", String.valueOf(ESTATUS_SALIDA));
             query.append(" $$ ").append(queryHelper.obtenerQueryInsertar());
         }
         return query.toString();
@@ -456,12 +456,23 @@ public class ValeSalida {
      *
      * @return
      */
-    public DatosRequest consultarFoliosOds() {
+    public DatosRequest consultarFoliosOds(ConsultaFoliosRequest request) {
+        // todo - probar
         SelectQueryUtil queryUtil = new SelectQueryUtil();
-        queryUtil.select("ID_ORDEN_SERVICIO as idOds",
-                        "CVE_FOLIO as folioOds")
-                .from("SVC_ORDEN_SERVICIO")
+        queryUtil.select("ods.ID_ORDEN_SERVICIO as idOds",
+                        "ods.CVE_FOLIO as folioOds")
+                .from("SVC_ORDEN_SERVICIO ods")
+                .join("SVC_VELATORIO velatorio", "velatorio.ID_VELATORIO = ods.ID_VELATORIO")
+                .join("SVC_DELEGACION delegacion", "delegacion.ID_DELEGACION = velatorio.ID_DELEGACION")
                 .where("ID_ESTATUS_ORDEN_SERVICIO = 2");
+        if (request.getIdDelegacion() != null) {
+            queryUtil.and("delegacion.ID_DELEGACION = :idDelegacion")
+                    .setParameter("idDelegacion", request.getIdDelegacion());
+        }
+        if (request.getIdVelatorio() != null) {
+            queryUtil.and("velatorio.ID_VELATORIO = :idVelatorio")
+                    .setParameter("idVelatorio", request.getIdVelatorio());
+        }
         return getDatosRequest(queryUtil);
     }
 
