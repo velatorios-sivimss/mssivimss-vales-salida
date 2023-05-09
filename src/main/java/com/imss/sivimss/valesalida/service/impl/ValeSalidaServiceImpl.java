@@ -473,7 +473,7 @@ public class ValeSalidaServiceImpl implements ValeSalidaService {
                 resultado.setNombreResponsableInstalacion(valeSalidaResponse.getNombreResponsableInstalacion());
                 resultado.setMatriculaResponsableInstalacion(valeSalidaResponse.getMatriculaResponsableInstalacion());
                 resultado.setMatriculaResponsableEntrega(valeSalidaResponse.getMatriculaResponsableEntrega());
-                resultado.setNombreResponsableEntrega(valeSalidaResponse.getMatriculaResponsableEntrega());
+                resultado.setNombreResponsableEntrega(valeSalidaResponse.getNombreResponsableEntrega());
                 resultado.setMatriculaResponsableEquipoVelacion(valeSalidaResponse.getMatriculaResponsableEquipo());
                 resultado.setNombreResponsableEquipoVelacion(valeSalidaResponse.getNombreResponsableEquipo());
 
