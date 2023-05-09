@@ -296,10 +296,11 @@ public class ValeSalida {
         queryHelper.agregarParametroValues("ID_VELATORIO", String.valueOf(valeSalida.getIdVelatorio()));
         queryHelper.agregarParametroValues("ID_ORDEN_SERVICIO", String.valueOf(valeSalida.getIdOds()));
         queryHelper.agregarParametroValues("FEC_SALIDA", "STR_TO_DATE('" + valeSalida.getFechaSalida() + "', '%d-%m-%Y')");
+        queryHelper.agregarParametroValues("NOM_RESPON_ENTREGA", "'" + String.valueOf(valeSalida.getNombreResponsableEntrega()) + "'");
         queryHelper.agregarParametroValues("NOM_RESPON_INSTA", "'" + valeSalida.getNombreResponsableInstalacion() + "'");
         queryHelper.agregarParametroValues("CVE_MATRICULA_RESINST", "'" + valeSalida.getMatriculaResponsableInstalacion() + "'");
-        queryHelper.agregarParametroValues("NOM_RESPEQUIVELACION", "'" + valeSalida.getNombreResponsableEquipoVelacion() + "'");
-        queryHelper.agregarParametroValues("CVE_MATRICULARESPEQUIVELACION", "'" + valeSalida.getMatriculaResponsableEquipoVelacion() + "'");
+//        queryHelper.agregarParametroValues("NOM_RESPEQUIVELACION", "'" + valeSalida.getNombreResponsableEquipoVelacion() + "'");
+//        queryHelper.agregarParametroValues("CVE_MATRICULARESPEQUIVELACION", "'" + valeSalida.getMatriculaResponsableEquipoVelacion() + "'");
 
         queryHelper.agregarParametroValues("NUM_DIA_NOVENARIO", String.valueOf(valeSalida.getDiasNovenario()));
 
@@ -374,10 +375,12 @@ public class ValeSalida {
                 .append("FEC_ACTUALIZACION = ").append(CURRENT_TIMESTAMP).append(", ");
 
         if (registrarEntrada) {
+//        queryHelper.agregarParametroValues("NOM_RESPEQUIVELACION", "'" + valeSalida.getNombreResponsableEquipoVelacion() + "'");
+//        queryHelper.agregarParametroValues("CVE_MATRICULARESPEQUIVELACION", "'" + valeSalida.getMatriculaResponsableEquipoVelacion() + "'");
             queryBuilder.append("FEC_ENTRADA = ").append("STR_TO_DATE('").append(valeSalida.getFechaEntrada()).append("', '%d-%m-%Y'), ")
-                    .append("NOM_RESPON_ENTREGA = ").append("'").append(valeSalida.getNombreResponsableEntrega()).append("', ")
-                    .append("ID_ESTATUS = ").append(2).append(", ")
-                    .append("CVE_MATRICULA_RESPON = ").append("'").append(valeSalida.getMatriculaResponsableEntrega()).append("' ");
+                    .append("ID_ESTATUS = ").append(ESTATUS_ENTRADA).append(", ")
+                    .append("NOM_RESPEQUIVELACION = ").append("'").append(valeSalida.getNombreResponsableEntrega()).append("', ")
+                    .append("CVE_MATRICULARESPEQUIVELACION = ").append("'").append(valeSalida.getMatriculaResponsableEntrega()).append("' ");
         } else {
             queryBuilder.append("CAN_ARTICULOS = ").append(valeSalida.getCantidadArticulos()).append(" ");
         }
