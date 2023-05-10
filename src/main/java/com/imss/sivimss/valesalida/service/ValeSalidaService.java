@@ -25,8 +25,6 @@ public interface ValeSalidaService {
 
     Response<?> cambiarEstatus(DatosRequest request, Authentication authentication) throws IOException;
 
-    Response<?> eliminarArticuloDetalleVale(DatosRequest request);
-
     Response<?> consultarCatalogoOds(DatosRequest request, Authentication authentication) throws IOException;
 
     Response<?> generarReportePdf(DatosRequest request, Authentication authentication) throws IOException, ParseException;

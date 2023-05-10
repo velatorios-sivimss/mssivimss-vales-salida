@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import com.imss.sivimss.valesalida.beans.ValeSalida;
 import com.imss.sivimss.valesalida.exception.BadRequestException;
+import com.imss.sivimss.valesalida.exception.ValidacionFechasException;
 import com.imss.sivimss.valesalida.model.request.*;
 import com.imss.sivimss.valesalida.model.response.ValeSalidaDto;
 import com.imss.sivimss.valesalida.model.response.ValeSalidaResponse;
@@ -31,8 +32,6 @@ public class ValeSalidaServiceImpl implements ValeSalidaService {
     //    MSG020	La fecha inicial no puede ser mayor que la fecha final.
     private final static String MSG_VALIDACION_FECHAS = "20";
     //    MSG022	Selecciona por favor un criterio de búsqueda.
-    private final static String MSG022_CRITERIO_BUSQUEDA = "22";
-    //    MSG023	El archivo se guardó correctamente.
     private final static String MSG023_GUARDAR_OK = "23";
     //    MSG064	Error en la descarga del documento. Intenta nuevamente.
     private final static String MSG064_ERROR_DESCARGA_DOC = "064";
@@ -103,7 +102,6 @@ public class ValeSalidaServiceImpl implements ValeSalidaService {
         } catch (Exception ex) {
             response = new Response<>();
             response.setCodigo(HttpStatus.INTERNAL_SERVER_ERROR.value());
-            // todo - cambiar por la nueva implementacion con el logger
             log.error("Ha ocurrido un error al crear el vale de salida");
             return MensajeResponseUtil.mensajeResponse(
                     response,
@@ -131,12 +129,12 @@ public class ValeSalidaServiceImpl implements ValeSalidaService {
             if (response.getDatos() == null) {
                 return MensajeResponseUtil.mensajeConsultaResponse(response, "No hay registros en el dia");
             }
-            // todo - cambiar por lo del logger
             return MensajeResponseUtil.mensajeResponse(response, "");
-        } catch (Exception e) {
-            // todo - manejar correctamente las excepciones para mandar el mensaje que corresponda
-            // todo - usar la utileria para mandar al log
-            throw e;
+        } catch (ValidacionFechasException e) {
+            final Response<?> response = new Response<>();
+            response.setCodigo(HttpStatus.OK.value());
+            response.setError(true);
+            return MensajeResponseUtil.mensajeResponse(response, e.getMensaje());
         }
     }
 
@@ -181,7 +179,6 @@ public class ValeSalidaServiceImpl implements ValeSalidaService {
                 URL_DOMINIO_CONSULTA,
                 authentication
         );
-        // todo hacer la validacion cuando se regresa algo vacio o sin datos
         return getValidacionResponse(response);
     }
 
@@ -239,7 +236,6 @@ public class ValeSalidaServiceImpl implements ValeSalidaService {
             return restTemplate.validarResponse(response);
         }
         cambiarEstatusDetalleVale(valeSalidaDto.getIdValeSalida(), idUsuario, ESTATUS_ENTREGADO, authentication);
-//        actualizarInventario(valeSalidaDto.getArticulos(), false, authentication);
         return MensajeResponseUtil.mensajeResponse(response, MSG133_REGISTRO_ENTRADA_OK);
     }
 
@@ -281,13 +277,6 @@ public class ValeSalidaServiceImpl implements ValeSalidaService {
             // todo - agregar el error adecuadamente
             throw new BadRequestException(HttpStatus.INTERNAL_SERVER_ERROR, "Error al eliminar los articulos relacionados");
         }
-    }
-
-    // todo - este servicio puede ser privado
-    @Override
-    public Response<?> eliminarArticuloDetalleVale(DatosRequest request) {
-        // todo - hay que ir a sumar la cantidad al articulo que se elimine
-        return null;
     }
 
     @Override
@@ -478,7 +467,6 @@ public class ValeSalidaServiceImpl implements ValeSalidaService {
                 resultado.setNombreResponsableEquipoVelacion(valeSalidaResponse.getNombreResponsableEquipo());
 
                 resultado.setDiasNovenario(valeSalidaResponse.getDiasNovenario());
-//                final Date parse = new SimpleDateFormat("yyyy-MM-dd").parse(valeSalidaResponse.getFechaSalida());
                 if (valeSalidaResponse.getFechaSalida() != null) {
                     resultado.setFechaSalida(fechaSalidaFormatter.format(new SimpleDateFormat("yyyy-MM-dd").parse(valeSalidaResponse.getFechaSalida())));
                 }

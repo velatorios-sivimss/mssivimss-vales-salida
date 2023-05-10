@@ -2,6 +2,7 @@ package com.imss.sivimss.valesalida.beans;
 
 import com.google.gson.Gson;
 import com.imss.sivimss.valesalida.exception.BadRequestException;
+import com.imss.sivimss.valesalida.exception.ValidacionFechasException;
 import com.imss.sivimss.valesalida.model.request.*;
 import com.imss.sivimss.valesalida.model.response.ValeSalidaDto;
 import com.imss.sivimss.valesalida.util.AppConstantes;
@@ -194,8 +195,7 @@ public class ValeSalida {
                             .setParameter("fechaInicial", filtros.getFechaInicio())
                             .setParameter("fechaFin", filtros.getFechaFinal());
                 } else {
-                    // todo - mandar el error de la validacion de las fechas pero hay que hacer la validacion en el servicio
-                    throw new BadRequestException(HttpStatus.BAD_REQUEST, "Enviar mensaje de las fechas");
+                    throw new ValidacionFechasException(HttpStatus.BAD_REQUEST, "Rango inválido de fechas.");
                 }
             }
         }
@@ -501,7 +501,7 @@ public class ValeSalida {
         parametros.put("ciudad", reporteDto.getEstado());
         parametros.put("nombreResponsableInstalacion", reporteDto.getNombreResponsableInstalacion());
         parametros.put("matriculaResponsableInstalacion", reporteDto.getMatriculaResponsableInstalacion());
-        parametros.put("condition", "WHERE vsd.`ID_VALESALIDA` = " + reporteDto.getIdValeSalida() + " AND vsd.`ID_ESTATUS` = 2");
+        parametros.put("condition", "WHERE vsd.`ID_VALESALIDA` = " + reporteDto.getIdValeSalida() + " AND vsd.`ID_ESTATUS` = 2 OR vsd.`ID_ESTATUS` = 1");
         parametros.put("nombreResponsableEquipo", reporteDto.getNombreResponsableEquipo());
         parametros.put("matriculaResponsableEquipo", reporteDto.getMatriculaResponsableEquipo());
 
