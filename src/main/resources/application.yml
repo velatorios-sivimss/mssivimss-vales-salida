@@ -26,21 +26,21 @@ logging:
     org.hibernate: error
 
 logos:
-  msit_logo_imss: /sivimss_data/LOGOS/logoImss.png
-  msit_logo_sistema: /sivimss_data/LOGOS/logoSistema.png
+  msit_logo_imss: ${msit_LOGO_IMSS}
+  msit_logo_sistema: ${msit_LOGO_SISTEMA}
 
 endpoints:
-  dominio-consulta: http://localhost:8090/mssivimss-mod-catalogos/v1/generico/consulta
+  dominio-consulta: ${msit_GENERICO_CONSULTA}
   dominio-consulta-paginado: http://localhost:8090/mssivimss-mod-catalogos/v1/generico/paginado
-  dominio-crear: http://localhost:8090/mssivimss-mod-catalogos/v1/generico/crear
-  dominio-insertar-multiple: http://localhost:8090/mssivimss-mod-catalogos/v1/generico/crearMultiple
-  dominio-actualizar: http://localhost:8090/mssivimss-mod-catalogos/v1/generico/actualizar
-  dominio-reportes: http://localhost:8088/mssivimss-reportes-jpr/v1/generales/generar-reporte
+  dominio-crear: ${msit_GENERICO_CREAR}
+  dominio-insertar-multiple: ${msit_GENERICO_INSERTAR_MULTIPLE}
+  dominio-actualizar: ${msit_GENERICO_ACTUALIZAR}
+  dominio-reportes: ${msit_GENERICO_REPORTES}
 
 jwt:
-  secretkey-flujo: funcionamuybien
-  secretkey-dominios: funcionamuybiendominio
-  expiration-milliseconds: 360
+  secretkey-flujo: ${msit_SECRET_KEY}
+  secretkey-dominios: ${msit_SECRET_KEY_DOMINIO}
+  expiration-milliseconds: ${msit_SECRET_KEY_EXPIRATION}
 
 management:
   endpoints:
@@ -54,19 +54,19 @@ resilience4j.circuitbreaker:
   instances:
     msflujo:
       automaticTransitionFromOpenToHalfOpenEnabled: 'true'
-      failureRateThreshold: '50'
+      failureRateThreshold: ${msit_HILOS}
       slidingWindowType: COUNT_BASED
       event-consumer-buffer-size: '10'
       registerHealthIndicator: 'true'
-      waitDurationInOpenState: 5s
+      waitDurationInOpenState: ${msit_TIEMPO_DURACION}
       permittedNumberOfCallsInHalfOpenState: '3'
       slidingWindowSize: '5'
 resilience4j.retry:
   retryAspectOrder: 2
   instances:
     msflujo:
-      maxAttempts: 3
-      waitDuration: 5s
+      maxAttempts: ${msit_NUMERO_INTENTOS}
+      waitDuration: ${msit_TIEMPO_DURACION}
 resilience4j.timelimiter:
   timeLimiterAspectOrder: 3
   instances:
@@ -74,6 +74,6 @@ resilience4j.timelimiter:
       timeout-duration: 3s
 
 
-formato_fecha: '%d/%m/%Y'
+formato_fecha: ${msit_FORMATO_FECHA}
 
-ruta-log: C:\Users\esanvicente\Desktop\tmp\sivimss\logs
+ruta-log: ${msit_RUTA_LOG}
