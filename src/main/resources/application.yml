@@ -31,7 +31,7 @@ logos:
 
 endpoints:
   dominio-consulta: ${msit_GENERICO_CONSULTA}
-  dominio-consulta-paginado: http://localhost:8090/mssivimss-mod-catalogos/v1/generico/paginado
+  dominio-consulta-paginado: ${msit_GENERICO_PAGINADO}
   dominio-crear: ${msit_GENERICO_CREAR}
   dominio-insertar-multiple: ${msit_GENERICO_INSERTAR_MULTIPLE}
   dominio-actualizar: ${msit_GENERICO_ACTUALIZAR}
