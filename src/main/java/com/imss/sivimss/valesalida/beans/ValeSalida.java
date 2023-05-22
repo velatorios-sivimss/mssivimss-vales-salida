@@ -1,7 +1,5 @@
 package com.imss.sivimss.valesalida.beans;
 
-import com.google.gson.Gson;
-import com.imss.sivimss.valesalida.exception.BadRequestException;
 import com.imss.sivimss.valesalida.exception.ValidacionFechasException;
 import com.imss.sivimss.valesalida.model.request.*;
 import com.imss.sivimss.valesalida.model.response.ValeSalidaDto;
@@ -25,6 +23,13 @@ import java.util.*;
 @Component
 @Slf4j
 public class ValeSalida {
+    private static final String ALIAS_ODS = "ods";
+    private static final String ALIAS_USU_CONTRATANTE = "usuContratante";
+    private static final String ALIAS_PER_CONTRATANTE = "perContratante";
+    private static final String ALIAS_PER_FINADO = "perFinado";
+    private static final String ALIAS_USU_FINADO = "usuFinado";
+    private static final String ALIAS_NOMBRE_CONTRATANTE = "nombreContratante";
+    private static final String ALIAS_NOMBRE_FINADO = "nombreFinado";
 
     private static final int TIPO_SERVICIO_RENTA_EQUIPO = 2;
     private static final String CURRENT_TIMESTAMP = "CURRENT_TIMESTAMP";
@@ -32,16 +37,38 @@ public class ValeSalida {
     private static final int ESTATUS_ELIMINADA = 0;
     private static final int ESTATUS_SALIDA = 1;
     private static final int ESTATUS_ENTRADA = 2;
-    // todo - agregar campos para las tablas y usarlos como constantes
-    // campos vale_salida, ver como se acomoda mejor usarlos
-//    private static final String ID_VALE_SALIDA = "vs.ID_VALE_SALIDA as idValeSalida";
-    private static final String ID_VALE_SALIDA = "ID_VALE_SALIDA";
-    private static final String FOLIO_ODS = "CVE_FOLIO";
-    private final Gson gson;
+    private static final String ID_VALE_SALIDA = "ID_VALESALIDA";
+    private static final String ID_CONTRATANTE = "ID_CONTRATANTE";
+    private static final String ID_PERSONA = "ID_PERSONA";
+    private static final String ID_ORDEN_SERVICIO = "ID_ORDEN_SERVICIO";
+    private static final String ID_ESTATUS = "ID_ESTATUS";
+    private static final String NOM_PERSONA = "NOM_PERSONA";
+    private static final String NOM_PRIMER_APELLIDO = "NOM_PRIMER_APELLIDO";
+    private static final String NOM_SEGUNDO_APELLIDO = "NOM_SEGUNDO_APELLIDO";
+    private static final String ID_USUARIO_ALTA = "ID_USUARIO_ALTA";
+    private static final String FEC_ALTA = "FEC_ALTA";
+    private static final String CAN_ARTICULOS = "CAN_ARTICULOS";
 
-    public ValeSalida() {
-        this.gson = new Gson();
-    }
+    // params
+    private static final String PARAM_ID_VELATORIO = "idVelatorio";
+    private static final String PARAM_ID_VALE_SALIDA = "idValeSalida";
+    private static final String PARAM_ID_DELEGACION = "idDelegacion";
+    private static final String PARAM_FOLIO_ODS = "folioOds";
+
+    // tablas
+    private static final String SVC_VELATORIO = "SVC_VELATORIO";
+    private static final String SVC_DELEGACION = "SVC_DELEGACION";
+    private static final String SVC_ORDEN_SERVICIO = "SVC_ORDEN_SERVICIO";
+    private static final String SVC_CONTRATANTE = "SVC_CONTRATANTE";
+    private static final String SVC_PERSONA = "SVC_PERSONA";
+    private static final String SVC_INFORMACION_SERVICIO = "SVC_INFORMACION_SERVICIO";
+    private static final String SVC_INFORMACION_SERVICIO_VELACION = "SVC_INFORMACION_SERVICIO_VELACION";
+    private static final String SVT_DOMICILIO = "SVT_DOMICILIO";
+    private static final String SVC_CP = "SVC_CP";
+    private static final String ID_VELATORIO = "ID_VELATORIO";
+    private static final String NOM_VELATORIO = "NOM_VELATORIO";
+    private static final String FOLIO_ODS = "CVE_FOLIO";
+
 
     /**
      * Consulta el detalle de un Vale de Salida.
@@ -52,15 +79,18 @@ public class ValeSalida {
      */
     public DatosRequest consultar(long id, Integer idDelegacion) {
         SelectQueryUtil queryUtil = new SelectQueryUtil();
-        queryUtil.select("vs.ID_VALESALIDA as idValeSalida",
+
+        queryUtil.select("vs." + ID_VALE_SALIDA + " as idValeSalida",
                         "vs.CVE_FOLIO as folioValeSalida",
-                        "v.ID_VELATORIO as idVelatorio",
-                        "v.NOM_VELATORIO as nombreVelatorio",
+                        "v." + ID_VELATORIO + " as idVelatorio",
+                        "v." + NOM_VELATORIO + " as nombreVelatorio",
                         "d.DES_DELEGACION as nombreDelegacion",
-                        "vs.ID_ORDEN_SERVICIO as idOds",
-                        "ods.CVE_FOLIO as folioOds",
-                        "perContratante.NOM_PERSONA as nombreContratante",
-                        "perFinado.NOM_PERSONA as nombreFinado",
+                        "vs." + ID_ORDEN_SERVICIO + " as idOds",
+                        ALIAS_ODS + "." + FOLIO_ODS + " as folioOds",
+                        recuperaNombre(ALIAS_PER_CONTRATANTE, ALIAS_NOMBRE_CONTRATANTE),
+                        recuperaNombre(ALIAS_PER_FINADO, ALIAS_NOMBRE_FINADO),
+//                        "perFinado." + NOM_PERSONA + " as nombreFinado",
+//                        "CONCAT(" + ALIAS_PER_CONTRATANTE + "." + NOM_PERSONA + ", ' ', " + ALIAS_PER_CONTRATANTE + ".NOM_PRIMER_APELLIDO, ' ', " + ALIAS_PER_CONTRATANTE + ".NOM_SEGUNDO_APELLIDO) as nombreContratante",
                         "vs.FEC_SALIDA as fechaSalida",
                         "vs.FEC_ENTRADA as fechaEntrada",
                         "vs.NUM_DIA_NOVENARIO as diasNovenario",
@@ -83,29 +113,38 @@ public class ValeSalida {
                         "dvs.CAN_ARTICULOS as cantidadArticulos",
                         "dvs.DES_OBSERVACION as observaciones")
                 .from("SVT_VALE_SALIDA vs")
-                .join("SVC_VELATORIO v", "vs.ID_VELATORIO = v.ID_VELATORIO")
-                .join("SVC_DELEGACION d", "d.ID_DELEGACION = :idDelegacion")
-                .join("SVC_ORDEN_SERVICIO ods",
-                        "vs.ID_ORDEN_SERVICIO = ods.ID_ORDEN_SERVICIO",
-                        "ods.ID_ESTATUS_ORDEN_SERVICIO = 2")
-                .join("SVC_FINADO usuFinado",
-                        "v.ID_VELATORIO = usuFinado.ID_VELATORIO",
-                        "usuFinado.ID_ORDEN_SERVICIO = ods.ID_ORDEN_SERVICIO")
-                .join("SVC_PERSONA perFinado", "usuFinado.ID_PERSONA = perFinado.ID_PERSONA")
-                .join("SVC_CONTRATANTE usuContratante", "ods.ID_CONTRATANTE = usuContratante.ID_CONTRATANTE")
-                .join("SVC_PERSONA perContratante", "usuContratante.ID_PERSONA = perContratante.ID_PERSONA")
-                .join("SVC_INFORMACION_SERVICIO infoServ", "infoServ.ID_ORDEN_SERVICIO = ods.ID_ORDEN_SERVICIO")
-                .join("SVC_INFORMACION_SERVICIO_VELACION infoOds", "infoOds.ID_INFORMACION_SERVICIO = infoServ.ID_INFORMACION_SERVICIO")
-                .join("SVT_DOMICILIO domicilio", "domicilio.ID_DOMICILIO = infoOds.ID_DOMICILIO")
-                .join("SVC_CP cp", "cp.ID_CODIGO_POSTAL = domicilio.ID_CP")
+                .join(SVC_VELATORIO + " v", "vs.ID_VELATORIO = v.ID_VELATORIO")
+                .join(SVC_DELEGACION + " d", "d.ID_DELEGACION = :idDelegacion")
+                .join(SVC_ORDEN_SERVICIO + " " + ALIAS_ODS,
+                        "vs." + ID_ORDEN_SERVICIO + " = " + ALIAS_ODS + "." + ID_ORDEN_SERVICIO,
+                        ALIAS_ODS + ".ID_ESTATUS_ORDEN_SERVICIO = 2")
+                .join("SVC_FINADO " + ALIAS_USU_FINADO,
+                        "v." + ID_VELATORIO + " = " + ALIAS_USU_FINADO + "." + ID_VELATORIO,
+                        ALIAS_USU_FINADO + "." + ID_ORDEN_SERVICIO + " = " + ALIAS_ODS + "." + ID_ORDEN_SERVICIO)
+                .join("SVC_PERSONA perFinado",
+                        ALIAS_USU_FINADO + "." + ID_PERSONA + " = perFinado." + ID_PERSONA)
+                .join(SVC_CONTRATANTE + " " + ALIAS_USU_CONTRATANTE,
+                        ALIAS_ODS + "." + ID_CONTRATANTE + " = " + ALIAS_USU_CONTRATANTE + "." + ID_CONTRATANTE)
+                .join(SVC_PERSONA + " " + ALIAS_PER_CONTRATANTE,
+                        ALIAS_USU_CONTRATANTE + "." + ID_PERSONA + " = " + ALIAS_PER_CONTRATANTE + "." + ID_PERSONA)
+                .join(SVC_INFORMACION_SERVICIO + " infoServ",
+                        "infoServ." + ID_ORDEN_SERVICIO + " = " + ALIAS_ODS + "." + ID_ORDEN_SERVICIO)
+                .join(SVC_INFORMACION_SERVICIO_VELACION + " infoOds",
+                        "infoOds.ID_INFORMACION_SERVICIO = infoServ.ID_INFORMACION_SERVICIO")
+                .join(SVT_DOMICILIO + " domicilio",
+                        "domicilio.ID_DOMICILIO = infoOds.ID_DOMICILIO")
+                .join(SVC_CP + " cp",
+                        "cp.CVE_CODIGO_POSTAL = domicilio.DES_CP")
                 .leftJoin("SVT_VALE_SALIDADETALLE dvs",
-                        "dvs.ID_VALESALIDA = vs.ID_VALESALIDA", "dvs.ID_ESTATUS = 1").or("dvs.ID_ESTATUS = 2")
-                .join("SVT_INVENTARIO inventario", "dvs.ID_INVENTARIO = inventario.ID_INVENTARIO");
+                        "dvs." + ID_VALE_SALIDA + " = vs." + ID_VALE_SALIDA, "dvs." + ID_ESTATUS + " = " + ESTATUS_SALIDA)
+                .or("dvs." + ID_ESTATUS + " = " + ESTATUS_ENTRADA)
+                .join("SVT_INVENTARIO inventario",
+                        "dvs.ID_INVENTARIO = inventario.ID_INVENTARIO");
 
-        queryUtil.where("vs.ID_VALESALIDA = :idValeSalida",
-                        "vs.ID_ESTATUS <> 0")
-                .setParameter("idValeSalida", id)
-                .setParameter("idDelegacion", idDelegacion)
+        queryUtil.where("vs." + ID_VALE_SALIDA + " = :idValeSalida",
+                        "vs." + ID_ESTATUS + " <> " + ESTATUS_ELIMINADA)
+                .setParameter(PARAM_ID_VALE_SALIDA, id)
+                .setParameter(PARAM_ID_DELEGACION, idDelegacion)
                 .groupBy("dvs.ID_INVENTARIO");
 
         String query = getQuery(queryUtil);
@@ -120,6 +159,17 @@ public class ValeSalida {
     }
 
     /**
+     * Recupera el nombre completo de una persona
+     *
+     * @param referencia
+     * @param alias
+     * @return
+     */
+    private static String recuperaNombre(String referencia, String alias) {
+        return "CONCAT(" + referencia + "." + NOM_PERSONA + ", ' ', " + referencia + "." + NOM_PRIMER_APELLIDO + ", ' ', " + referencia + "." + NOM_SEGUNDO_APELLIDO + ") as " + alias;
+    }
+
+    /**
      * Elimina los productos de un vale de salida
      *
      * @param idValeSalida
@@ -128,11 +178,13 @@ public class ValeSalida {
     public DatosRequest cambiarEstatusDetalleValeSalida(Long idValeSalida, Integer idUsuario, int estatus) {
 
         StringBuilder queryBuilder = new StringBuilder("UPDATE SVT_VALE_SALIDADETALLE SET ");
-        queryBuilder.append("ID_ESTATUS = ").append(estatus).append(", ")
+        queryBuilder.append(ID_ESTATUS).append(" = ").append(estatus).append(", ")
                 .append("ID_USUARIO_MODIFICA = ").append(idUsuario).append(", ")
                 .append("FEC_ACTUALIZACION = ").append(CURRENT_TIMESTAMP).append(" ")
-                .append("WHERE ID_VALESALIDA = ").append(idValeSalida)
-                .append(" AND ID_ESTATUS = ").append(ESTATUS_SALIDA);
+                .append("WHERE ")
+                .append(ID_VALE_SALIDA).append(" ").append(idValeSalida)
+                .append(" AND ")
+                .append(ID_ESTATUS).append(" = ").append(ESTATUS_SALIDA);
 
         String query = queryBuilder.toString();
 
@@ -153,40 +205,40 @@ public class ValeSalida {
      * @return
      */
     public DatosRequest consultarValesSalida(DatosRequest request, FiltrosRequest filtros) {
-//        FiltrosRequest filtros = gson.fromJson(
-//                String.valueOf(request.getDatos().get(AppConstantes.DATOS)),
-//                FiltrosRequest.class
-//        );
         SelectQueryUtil queryUtil = new SelectQueryUtil();
 
-        queryUtil.select("ID_VALESALIDA as idValeSalida",
-                        "v.ID_VELATORIO as idVelatorio",
-                        "v.NOM_VELATORIO as nombreVelatorio",
+        queryUtil.select(ID_VALE_SALIDA + " as idValeSalida",
+                        "v." + ID_VELATORIO + " as idVelatorio",
+                        "v." + NOM_VELATORIO + " as nombreVelatorio",
                         "vs.ID_ORDEN_SERVICIO as idOds",
-                        "ods.CVE_FOLIO as folioOds",
+                        ALIAS_ODS + ".CVE_FOLIO as folioOds",
                         "vs.FEC_SALIDA as fechaSalida",
                         "vs.FEC_ENTRADA as fechaEntrada",
-                        "vs.ID_ESTATUS as idEstatus",
+                        "vs." + ID_ESTATUS + " as idEstatus",
                         "vs.NUM_DIA_NOVENARIO as diasNovenario",
                         "vs.NOM_RESPON_INSTA as nombreResponsableInstalacion",
                         "vs.CAN_ARTICULOS as totalArticulos",
-                        "CONCAT(perContratante.NOM_PERSONA, ' ', perContratante.NOM_PRIMER_APELLIDO, ' ', perContratante.NOM_SEGUNDO_APELLIDO) as nombreContratante")
+//                        "CONCAT(" + ALIAS_PER_CONTRATANTE + ".NOM_PERSONA, ' ', " + ALIAS_PER_CONTRATANTE + ".NOM_PRIMER_APELLIDO, ' ', " + ALIAS_PER_CONTRATANTE + ".NOM_SEGUNDO_APELLIDO) as nombreContratante")
+                        recuperaNombre(ALIAS_PER_CONTRATANTE, ALIAS_NOMBRE_CONTRATANTE))
                 .from("SVT_VALE_SALIDA vs")
-                .join("SVC_VELATORIO v", "vs.ID_VELATORIO = v.ID_VELATORIO")
-                .join("SVC_ORDEN_SERVICIO ods", "vs.ID_ORDEN_SERVICIO = ods.ID_ORDEN_SERVICIO")
-                .join("SVC_CONTRATANTE usuContratante", "ods.ID_CONTRATANTE = usuContratante.ID_CONTRATANTE")
-                .join("SVC_PERSONA perContratante", "usuContratante.ID_PERSONA = perContratante.ID_PERSONA")
-                .where("vs.ID_ESTATUS <> 0");
+                .join("SVC_VELATORIO v",
+                        "vs.ID_VELATORIO = v.ID_VELATORIO")
+                .join(SVC_ORDEN_SERVICIO + " " + ALIAS_ODS,
+                        "vs.ID_ORDEN_SERVICIO = " + ALIAS_ODS + ".ID_ORDEN_SERVICIO")
+                .join(SVC_CONTRATANTE + " " + ALIAS_USU_CONTRATANTE,
+                        ALIAS_ODS + ".ID_CONTRATANTE = usuContratante.ID_CONTRATANTE")
+                .join(SVC_PERSONA + " " + ALIAS_PER_CONTRATANTE,
+                        "usuContratante." + ID_PERSONA + " = " + ALIAS_PER_CONTRATANTE + "." + ID_PERSONA)
+                .where("vs." + ID_ESTATUS + " <> " + ESTATUS_ELIMINADA);
 
-        // todo - falta agregar la delegacion en las validaciones
         if (filtros != null && !filtros.validarNulos()) {
             if (filtros.getIdVelatorio() != null) {
-                queryUtil.where("vs.ID_VELATORIO = :idVelatorio")
-                        .setParameter("idVelatorio", filtros.getIdVelatorio());
+                queryUtil.where("vs." + ID_VELATORIO + " = :idVelatorio")
+                        .setParameter(PARAM_ID_VELATORIO, filtros.getIdVelatorio());
             }
             if (filtros.getFolioOds() != null) {
-                queryUtil.where("ods.CVE_FOLIO = :folioOds")
-                        .setParameter("folioOds", filtros.getFolioOds());
+                queryUtil.where("ods." + FOLIO_ODS + " = :folioOds")
+                        .setParameter(PARAM_FOLIO_ODS, filtros.getFolioOds());
             }
             if (filtros.getFechaInicio() != null && filtros.getFechaFinal() != null) {
                 if (filtros.validarFechas()) {
@@ -221,8 +273,10 @@ public class ValeSalida {
                         "d.DES_DELEGACION as nombreDelegacion",
                         "ods.ID_ORDEN_SERVICIO as idOds",
                         "ods.CVE_FOLIO as request",
-                        "CONCAT(perContratante.NOM_PERSONA, ' ', perContratante.NOM_PRIMER_APELLIDO, ' ', perContratante.NOM_SEGUNDO_APELLIDO) as nombreContratante",
-                        "CONCAT(perFinado.NOM_PERSONA, ' ', perFinado.NOM_PRIMER_APELLIDO, ' ', perFinado.NOM_SEGUNDO_APELLIDO) as nombreFinado",
+//                        "CONCAT(" + ALIAS_PER_CONTRATANTE + ".NOM_PERSONA, ' ', " + ALIAS_PER_CONTRATANTE + ".NOM_PRIMER_APELLIDO, ' ', " + ALIAS_PER_CONTRATANTE + ".NOM_SEGUNDO_APELLIDO) as nombreContratante",
+                        recuperaNombre(ALIAS_PER_CONTRATANTE, ALIAS_NOMBRE_CONTRATANTE),
+//                        "CONCAT(perFinado.NOM_PERSONA, ' ', perFinado.NOM_PRIMER_APELLIDO, ' ', perFinado.NOM_SEGUNDO_APELLIDO) as nombreFinado",
+                        recuperaNombre(ALIAS_PER_FINADO, ALIAS_NOMBRE_FINADO),
                         "domicilio.DES_CALLE as calle",
                         "domicilio.NUM_EXTERIOR as numExt",
                         "domicilio.NUM_INTERIOR as numInt",
@@ -236,17 +290,20 @@ public class ValeSalida {
                 .from("SVC_ORDEN_SERVICIO ods")
                 .join("SVC_VELATORIO v")
                 .join("SVC_DELEGACION d", "d.ID_DELEGACION = v.ID_DELEGACION")
-                .join("SVC_FINADO usuFinado",
-                        "v.ID_VELATORIO = usuFinado.ID_VELATORIO",
-                        "usuFinado.ID_ORDEN_SERVICIO = ods.ID_ORDEN_SERVICIO")
-                .join("SVC_PERSONA perFinado", "usuFinado.ID_PERSONA = perFinado.ID_PERSONA")
-                .join("SVC_CONTRATANTE usuContratante", "ods.ID_CONTRATANTE = usuContratante.ID_CONTRATANTE")
-                .join("SVC_PERSONA perContratante", "usuContratante.ID_PERSONA = perContratante.ID_PERSONA")
+                .join("SVC_FINADO " + ALIAS_USU_FINADO,
+                        "v.ID_VELATORIO = " + ALIAS_USU_FINADO + ".ID_VELATORIO",
+                        ALIAS_USU_FINADO + ".ID_ORDEN_SERVICIO = ods.ID_ORDEN_SERVICIO")
+                .join(SVC_PERSONA + " perFinado",
+                        ALIAS_USU_FINADO + "." + ID_PERSONA + " = perFinado." + ID_PERSONA)
+                .join(SVC_CONTRATANTE + " usuContratante",
+                        "ods." + ID_CONTRATANTE + " = usuContratante." + ID_CONTRATANTE)
+                .join(SVC_PERSONA + " " + ALIAS_PER_CONTRATANTE,
+                        "usuContratante.ID_PERSONA = " + ALIAS_PER_CONTRATANTE + ".ID_PERSONA")
                 .join("SVC_INFORMACION_SERVICIO infoServ", "infoServ.ID_ORDEN_SERVICIO = ods.ID_ORDEN_SERVICIO")
                 .join("SVC_INFORMACION_SERVICIO_VELACION infoOds",
                         "infoOds.ID_INFORMACION_SERVICIO = infoServ.ID_INFORMACION_SERVICIO")
                 .join("SVT_DOMICILIO domicilio", "domicilio.ID_DOMICILIO = infoOds.ID_DOMICILIO")
-                .join("SVC_CP cp", "cp.ID_CODIGO_POSTAL = domicilio.ID_CP")
+                .join("SVC_CP cp", "cp.CVE_CODIGO_POSTAL = domicilio.DES_CP")
                 .join("SVT_INVENTARIO inventario",
                         "inventario.ID_VELATORIO = v.ID_VELATORIO",
                         "inventario.ID_TIPO_SERVICIO = " + TIPO_SERVICIO_RENTA_EQUIPO);
@@ -256,9 +313,9 @@ public class ValeSalida {
                         "ods.ID_ESTATUS_ORDEN_SERVICIO = " + ESTATUS_ODS_GENERADA,
                         "d.ID_DELEGACION = :idDelegacion",
                         "v.ID_VELATORIO = :idVelatorio")
-                .setParameter("folioOds", request.getFolioOds())
-                .setParameter("idDelegacion", request.getIdDelegacion())
-                .setParameter("idVelatorio", request.getIdVelatorio());
+                .setParameter(PARAM_FOLIO_ODS, request.getFolioOds())
+                .setParameter(PARAM_ID_DELEGACION, request.getIdDelegacion())
+                .setParameter(PARAM_ID_VELATORIO, request.getIdVelatorio());
 
         return getDatosRequest(queryUtil);
     }
@@ -293,23 +350,20 @@ public class ValeSalida {
         final List<DetalleValeSalidaRequest> articulos = valeSalida.getArticulos();
 
         QueryHelper queryHelper = new QueryHelper("INSERT INTO SVT_VALE_SALIDA");
-        queryHelper.agregarParametroValues("ID_VELATORIO", String.valueOf(valeSalida.getIdVelatorio()));
-        queryHelper.agregarParametroValues("ID_ORDEN_SERVICIO", String.valueOf(valeSalida.getIdOds()));
+        queryHelper.agregarParametroValues(ID_VELATORIO, String.valueOf(valeSalida.getIdVelatorio()));
+        queryHelper.agregarParametroValues(ID_ORDEN_SERVICIO, String.valueOf(valeSalida.getIdOds()));
         queryHelper.agregarParametroValues("FEC_SALIDA", "STR_TO_DATE('" + valeSalida.getFechaSalida() + "', '%d-%m-%Y')");
         queryHelper.agregarParametroValues("NOM_RESPON_ENTREGA", "'" + String.valueOf(valeSalida.getNombreResponsableEntrega()) + "'");
         queryHelper.agregarParametroValues("NOM_RESPON_INSTA", "'" + valeSalida.getNombreResponsableInstalacion() + "'");
         queryHelper.agregarParametroValues("CVE_MATRICULA_RESINST", "'" + valeSalida.getMatriculaResponsableInstalacion() + "'");
-//        queryHelper.agregarParametroValues("NOM_RESPEQUIVELACION", "'" + valeSalida.getNombreResponsableEquipoVelacion() + "'");
-//        queryHelper.agregarParametroValues("CVE_MATRICULARESPEQUIVELACION", "'" + valeSalida.getMatriculaResponsableEquipoVelacion() + "'");
 
         queryHelper.agregarParametroValues("NUM_DIA_NOVENARIO", String.valueOf(valeSalida.getDiasNovenario()));
+        queryHelper.agregarParametroValues(CAN_ARTICULOS, String.valueOf(valeSalida.getCantidadArticulos()));
 
-        queryHelper.agregarParametroValues("CAN_ARTICULOS", String.valueOf(valeSalida.getCantidadArticulos()));
+        queryHelper.agregarParametroValues(ID_ESTATUS, String.valueOf(ESTATUS_SALIDA));
 
-        queryHelper.agregarParametroValues("ID_ESTATUS", String.valueOf(ESTATUS_SALIDA));
-
-        queryHelper.agregarParametroValues("ID_USUARIO_ALTA", String.valueOf(idUsuario));
-        queryHelper.agregarParametroValues("FEC_ALTA", CURRENT_TIMESTAMP);
+        queryHelper.agregarParametroValues(ID_USUARIO_ALTA, String.valueOf(idUsuario));
+        queryHelper.agregarParametroValues(FEC_ALTA, CURRENT_TIMESTAMP);
 
         String queriesArticulos = crearDetalleVale(articulos, idUsuario);
         String query = queryHelper.obtenerQueryInsertar() + queriesArticulos;
@@ -331,15 +385,15 @@ public class ValeSalida {
         StringBuilder query = new StringBuilder();
         for (DetalleValeSalidaRequest detalleValeSalida : articulos) {
             QueryHelper queryHelper = new QueryHelper("INSERT INTO SVT_VALE_SALIDADETALLE");
-            queryHelper.agregarParametroValues("ID_VALESALIDA", "idTabla");
+            queryHelper.agregarParametroValues(ID_VALE_SALIDA, "idTabla");
             queryHelper.agregarParametroValues("ID_INVENTARIO", String.valueOf(detalleValeSalida.getIdInventario()));
-            queryHelper.agregarParametroValues("CAN_ARTICULOS", String.valueOf(detalleValeSalida.getCantidad()));
+            queryHelper.agregarParametroValues(CAN_ARTICULOS, String.valueOf(detalleValeSalida.getCantidad()));
             queryHelper.agregarParametroValues("DES_OBSERVACION", "'" + detalleValeSalida.getObservaciones() + "'");
 
-            queryHelper.agregarParametroValues("ID_USUARIO_ALTA", String.valueOf(idUsuario));
-            queryHelper.agregarParametroValues("FEC_ALTA", CURRENT_TIMESTAMP);
+            queryHelper.agregarParametroValues(ID_USUARIO_ALTA, String.valueOf(idUsuario));
+            queryHelper.agregarParametroValues(FEC_ALTA, CURRENT_TIMESTAMP);
 
-            queryHelper.agregarParametroValues("ID_ESTATUS", String.valueOf(ESTATUS_SALIDA));
+            queryHelper.agregarParametroValues(ID_ESTATUS, String.valueOf(ESTATUS_SALIDA));
             query.append(" $$ ").append(queryHelper.obtenerQueryInsertar());
         }
         return query.toString();
@@ -357,7 +411,6 @@ public class ValeSalida {
         final List<String> updates = Arrays.asList(queries);
         parametros.put("updates", updates.stream().map(ValeSalida::getBinary));
 
-        final DatosRequest datosRequest = new DatosRequest();
         return updates;
     }
 
@@ -375,10 +428,8 @@ public class ValeSalida {
                 .append("FEC_ACTUALIZACION = ").append(CURRENT_TIMESTAMP).append(", ");
 
         if (registrarEntrada) {
-//        queryHelper.agregarParametroValues("NOM_RESPEQUIVELACION", "'" + valeSalida.getNombreResponsableEquipoVelacion() + "'");
-//        queryHelper.agregarParametroValues("CVE_MATRICULARESPEQUIVELACION", "'" + valeSalida.getMatriculaResponsableEquipoVelacion() + "'");
             queryBuilder.append("FEC_ENTRADA = ").append("STR_TO_DATE('").append(valeSalida.getFechaEntrada()).append("', '%d-%m-%Y'), ")
-                    .append("ID_ESTATUS = ").append(ESTATUS_ENTRADA).append(", ")
+                    .append(ID_ESTATUS + " = ").append(ESTATUS_ENTRADA).append(", ")
                     .append("NOM_RESPEQUIVELACION = ").append("'").append(valeSalida.getNombreResponsableEntrega()).append("', ")
                     .append("CVE_MATRICULARESPEQUIVELACION = ").append("'").append(valeSalida.getMatriculaResponsableEntrega()).append("' ");
         } else {
@@ -425,14 +476,14 @@ public class ValeSalida {
      */
     public DatosRequest actualizarDetalleValeSalida(Long idValeSalida, Integer idUsuario, DetalleValeSalidaRequest articulo, int estatus) {
         QueryHelper queryHelper = new QueryHelper("INSERT INTO SVT_VALE_SALIDADETALLE");
-        queryHelper.agregarParametroValues("ID_VALESALIDA", String.valueOf(idValeSalida));
+        queryHelper.agregarParametroValues(ID_VALE_SALIDA, String.valueOf(idValeSalida));
         queryHelper.agregarParametroValues("ID_INVENTARIO", String.valueOf(articulo.getIdInventario()));
-        queryHelper.agregarParametroValues("CAN_ARTICULOS", String.valueOf(articulo.getCantidad()));
+        queryHelper.agregarParametroValues(CAN_ARTICULOS, String.valueOf(articulo.getCantidad()));
         queryHelper.agregarParametroValues("DES_OBSERVACION", "'" + articulo.getObservaciones() + "'");
-        queryHelper.agregarParametroValues("ID_ESTATUS", String.valueOf(estatus));
+        queryHelper.agregarParametroValues(ID_ESTATUS, String.valueOf(estatus));
 
-        queryHelper.agregarParametroValues("ID_USUARIO_ALTA", String.valueOf(idUsuario));
-        queryHelper.agregarParametroValues("FEC_ALTA", CURRENT_TIMESTAMP);
+        queryHelper.agregarParametroValues(ID_USUARIO_ALTA, String.valueOf(idUsuario));
+        queryHelper.agregarParametroValues(FEC_ALTA, CURRENT_TIMESTAMP);
 
         return getDatosRequest(queryHelper.obtenerQueryInsertar());
     }
@@ -459,7 +510,6 @@ public class ValeSalida {
      * @return
      */
     public DatosRequest consultarFoliosOds(ConsultaFoliosRequest request) {
-        // todo - probar
         SelectQueryUtil queryUtil = new SelectQueryUtil();
         queryUtil.select("ods.ID_ORDEN_SERVICIO as idOds",
                         "ods.CVE_FOLIO as folioOds")
@@ -469,11 +519,11 @@ public class ValeSalida {
                 .where("ID_ESTATUS_ORDEN_SERVICIO = 2");
         if (request.getIdDelegacion() != null) {
             queryUtil.and("delegacion.ID_DELEGACION = :idDelegacion")
-                    .setParameter("idDelegacion", request.getIdDelegacion());
+                    .setParameter(PARAM_ID_DELEGACION, request.getIdDelegacion());
         }
         if (request.getIdVelatorio() != null) {
             queryUtil.and("velatorio.ID_VELATORIO = :idVelatorio")
-                    .setParameter("idVelatorio", request.getIdVelatorio());
+                    .setParameter(PARAM_ID_VELATORIO, request.getIdVelatorio());
         }
         return getDatosRequest(queryUtil);
     }
@@ -495,17 +545,17 @@ public class ValeSalida {
         parametros.put("nombreResponsableEntrega", reporteDto.getNombreResponsableEntrega());
         parametros.put("matriculaResponsableEntrega", reporteDto.getMatriculaResponsableEntrega());
         parametros.put("diasNovenario", reporteDto.getDiasNovenario());
-        parametros.put("folioOds", reporteDto.getFolioOds());
+        parametros.put(PARAM_FOLIO_ODS, reporteDto.getFolioOds());
         parametros.put("fechaSalida", reporteDto.getFechaSalida());
         parametros.put("domicilio", reporteDto.getDomicilio());
         parametros.put("ciudad", reporteDto.getEstado());
         parametros.put("nombreResponsableInstalacion", reporteDto.getNombreResponsableInstalacion());
         parametros.put("matriculaResponsableInstalacion", reporteDto.getMatriculaResponsableInstalacion());
-        parametros.put("condition", "WHERE vsd.`ID_VALESALIDA` = " + reporteDto.getIdValeSalida() + " AND vsd.`ID_ESTATUS` = 2 OR vsd.`ID_ESTATUS` = 1");
+        parametros.put("condition", "WHERE vsd.`ID_VALESALIDA` = " + reporteDto.getIdValeSalida() + " AND vsd." + ID_ESTATUS + " = 2 OR vsd." + ID_ESTATUS + " = 1");
         parametros.put("nombreResponsableEquipo", reporteDto.getNombreResponsableEquipo());
         parametros.put("matriculaResponsableEquipo", reporteDto.getMatriculaResponsableEquipo());
 
-        parametros.put("nombreContratante", reporteDto.getNombreContratante());
+        parametros.put(ALIAS_NOMBRE_CONTRATANTE, reporteDto.getNombreContratante());
 
         if (reporteDto.getFechaEntrega() != null && !reporteDto.getFechaEntrega().isEmpty()) {
             final SimpleDateFormat dateFormatter = new SimpleDateFormat("dd MMMM yyyy", new Locale("es", "MX"));
@@ -542,9 +592,9 @@ public class ValeSalida {
         parametros.put("rutaNombreReporte", filtros.getRuta());
         parametros.put("tipoReporte", filtros.getTipoReporte());
         parametros.put("idValeSalida", filtros.getIdValeSalida());
-        parametros.put("idVelatorio", filtros.getIdVelatorio());
+        parametros.put(PARAM_ID_VELATORIO, filtros.getIdVelatorio());
         parametros.put("velatorio", filtros.getNombreVelatorio());
-        parametros.put("folioOds", filtros.getFolioOds());
+        parametros.put(PARAM_FOLIO_ODS, filtros.getFolioOds());
         parametros.put("fechaInicio", filtros.getFechaInicio());
         parametros.put("fechaFin", filtros.getFechaFinal());
         return parametros;
@@ -558,8 +608,13 @@ public class ValeSalida {
      */
     public DatosRequest cambiarEstatus(Long idValeSalida, Integer idUsuario) {
         StringBuilder queryBuilder = new StringBuilder("UPDATE SVT_VALE_SALIDA ");
-        queryBuilder.append("SET ID_ESTATUS = 0 ")
-                .append("WHERE ID_VALESALIDA = ").append(idValeSalida);
+        queryBuilder.append("SET ")
+                .append(ID_ESTATUS).append(" = ").append(ESTATUS_ELIMINADA).append(", ")
+                .append("ID_USUARIO_ACTUALIZA").append(" = ").append(idUsuario).append(", ")
+                .append("FEC_ACTUALIZACION").append(" = ").append(CURRENT_TIMESTAMP)
+                .append(" WHERE ")
+                .append(ID_VALE_SALIDA).append(" = ").append(idValeSalida);
+
         String query = queryBuilder.toString();
         Map<String, Object> parametros = new HashMap<>();
         parametros.put(AppConstantes.QUERY, getBinary(query));

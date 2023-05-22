@@ -9,7 +9,6 @@ import java.util.List;
 @Getter
 @Setter
 public class ReporteDto {
-    // todo - agregar los datos que se necesitan par el formato
     private Long idOoad;
     private String nombreDelegacion;
     private Long idVelatorio;
@@ -33,9 +32,8 @@ public class ReporteDto {
     private Date fechaEntregaTmp;
 
     // datos del reporte
-    // todo - ver si se puede hacer la condicion
     private Long idValeSalida;
-    private String condition; // no se va a usar
+    private String condition;
     private String ruta;
     private String tipoReporte;
 }
