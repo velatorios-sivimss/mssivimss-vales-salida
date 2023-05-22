@@ -1,6 +1,8 @@
 package com.imss.sivimss.valesalida.model.request;
 
+import com.imss.sivimss.valesalida.exception.ValidacionFechasException;
 import lombok.Getter;
+import org.springframework.http.HttpStatus;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -42,7 +44,7 @@ public class FiltrosRequest {
 
             return fecha1.compareTo(fecha2) < 0;
         } catch (ParseException e) {
-            throw new RuntimeException(e);
+            throw new ValidacionFechasException(HttpStatus.BAD_REQUEST, e.getMessage());
         }
     }
 

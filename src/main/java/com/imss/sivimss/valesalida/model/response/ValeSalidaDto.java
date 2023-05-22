@@ -7,7 +7,6 @@ import lombok.Setter;
 import java.util.Date;
 import java.util.List;
 
-// todo - agregar los campos que le hagan falta al dto
 @Getter
 @Setter
 public class ValeSalidaDto {
@@ -76,19 +75,5 @@ public class ValeSalidaDto {
                 cantidadArticulos == null;
     }
 
-    /**
-     * Verifica si todos los elementos en el objeto son nulos.
-     *
-     * @return <b>{@code true}</b> o <b>{@code false}</b> dependiendo si todas las propiedades del objeto son
-     * nulas o no.
-     */
-//    public boolean validarNulos() {
-//        return idNivel == null &&
-//                idDelegacion == null &&
-//                idVelatorio == null &&
-//                idValeSalida == null &&
-//                folioOds == null &&
-//                fechaInicio == null && fechaFinal == null;
-//    }
 }
 

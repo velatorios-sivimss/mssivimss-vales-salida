@@ -1,6 +1,5 @@
 package com.imss.sivimss.valesalida.service;
 
-import com.imss.sivimss.valesalida.model.response.ValeSalidaDto;
 import com.imss.sivimss.valesalida.util.DatosRequest;
 import com.imss.sivimss.valesalida.util.Response;
 import org.springframework.security.core.Authentication;
@@ -14,6 +13,8 @@ public interface ValeSalidaService {
     Response<?> crearVale(DatosRequest request, Authentication authentication) throws IOException;
 
     Response<?> consultarVales(DatosRequest request, Authentication authentication) throws IOException;
+
+    Response<?> consultarValesFiltros(DatosRequest request, Authentication authentication) throws IOException;
 
     Response<?> consultarDetalle(DatosRequest request, Authentication authentication) throws IOException;
 
@@ -30,4 +31,5 @@ public interface ValeSalidaService {
     Response<?> generarReportePdf(DatosRequest request, Authentication authentication) throws IOException, ParseException;
 
     Response<?> generarReporteTabla(DatosRequest request, Authentication authentication) throws IOException, ParseException;
+
 }

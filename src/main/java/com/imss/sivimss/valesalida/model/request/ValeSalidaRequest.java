@@ -8,7 +8,6 @@ import java.util.List;
 public class ValeSalidaRequest {
     private Long idVelatorio;
     private String nombreVelatorio;
-    // todo - los demas datos salen de la ods
     private long idOds;
     private String folioOds;
     private String folioValeSalida;
@@ -31,6 +30,5 @@ public class ValeSalidaRequest {
     private String cantidadArticulos;
     private String matriculaUsuarioResponsable;
     private String matriculaUsuarioEntrega;
-    // todo - agregar los campos faltantes
     private List<DetalleValeSalidaRequest> articulos;
 }

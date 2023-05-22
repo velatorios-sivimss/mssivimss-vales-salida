@@ -6,8 +6,8 @@ import lombok.Setter;
 @Getter
 @Setter
 public class ReporteTablaDto {
-    // todo - pasar tambien el id delegacion a la consulta
     private Integer idValeSalida;
+    private Integer idDelegacion;
     private Integer idVelatorio;
     private String nombreVelatorio;
     private String folioOds;
@@ -24,7 +24,7 @@ public class ReporteTablaDto {
      */
     public boolean validarNulos() {
         return
-//                idDelegacion == null &&
+                idDelegacion == null &&
                 idVelatorio == null &&
                 idValeSalida == null &&
                 folioOds == null &&

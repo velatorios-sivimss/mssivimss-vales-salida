@@ -89,7 +89,7 @@ public class ValeSalidaController {
     @TimeLimiter(name = "msflujo")
     @PostMapping("/consultar-con-filtros")
     public CompletableFuture<?> consultarValesPorFiltros(@RequestBody DatosRequest request, Authentication authentication) throws IOException {
-        Response<?> response = valeSalidaService.consultarVales(request, authentication);
+        Response<?> response = valeSalidaService.consultarValesFiltros(request, authentication);
         return CompletableFuture.supplyAsync(() -> getResponseEntity(response));
     }
 
@@ -168,7 +168,6 @@ public class ValeSalidaController {
     private CompletableFuture<?> fallbackGenerico(@RequestBody DatosRequest request, Authentication authentication,
                                                   CallNotPermittedException e) {
         Response<?> response = restTemplate.respuestaProvider(e.getMessage());
-//        logUtil.crearArchivoLog(Level.INFO.toString(), );
         return CompletableFuture
                 .supplyAsync(() -> new ResponseEntity<>(response, HttpStatus.valueOf(response.getCodigo())));
     }

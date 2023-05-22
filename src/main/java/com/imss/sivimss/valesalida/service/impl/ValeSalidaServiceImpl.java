@@ -28,39 +28,25 @@ public class ValeSalidaServiceImpl implements ValeSalidaService {
 
     private static final int ESTATUS_ENTREGADO = 2;
     private static final String MSG_ERROR_REGISTRAR = "5";
-    private static final String SIN_INFORMACION = "87";//No contamos con capillas disponibles por el momento. Intenta mas tarde.
-    //    MSG020	La fecha inicial no puede ser mayor que la fecha final.
-    private final static String MSG_VALIDACION_FECHAS = "20";
-    //    MSG022	Selecciona por favor un criterio de búsqueda.
-    private final static String MSG023_GUARDAR_OK = "23";
-    //    MSG064	Error en la descarga del documento. Intenta nuevamente.
-    private final static String MSG064_ERROR_DESCARGA_DOC = "064";
-    //    MSG085	El número de folio no existe. Verifica tu información.
-    private final static String MSG085_ERROR_FOLIO = "085";
-    //    MSG095	¿Estás seguro de eliminar el artículo?
-    private final static String MSG095_CONFIRMA_ELIMINAR = "95";
-    //    MSG120	¿Estás seguro de registrar la salida del equipo de velación?
-    private final static String MSG095_CONFIRMAR_REGISTRO_SALIDA = "120";
+    private static final String MSG023_GUARDAR_OK = "23";
     //    MSG131	Se ha registrado correctamente el registro de salida del equipo de velación.
-    private final static String MSG131_REGISTRO_SALIDA_OK = "131";
-    //    MSG132	¿Estás seguro de registrar la entrada del equipo de velación?
-    private final static String MSG132_CONFIRMAR_REGISTRO_ENTRADA = "132";
+    private static final String MSG131_REGISTRO_SALIDA_OK = "131";
     //    MSG133	Se ha registrado correctamente el registro de entrada del equipo de velación.
-    private final static String MSG133_REGISTRO_ENTRADA_OK = "133";
+    private static final String MSG133_REGISTRO_ENTRADA_OK = "133";
 
     // endpoints
     @Value("${endpoints.dominio-consulta}")
-    private String URL_DOMINIO_CONSULTA;
+    private String urlDominioConsulta;
     @Value("${endpoints.dominio-consulta-paginado}")
-    private String URL_DOMINIO_CONSULTA_PAGINADO;
+    private String urlDominioConsultaPaginado;
     @Value("${endpoints.dominio-crear}")
-    private String URL_DOMINIO_CREAR;
+    private String urlDominioCrear;
     @Value("${endpoints.dominio-insertar-multiple}")
-    private String URL_DOMINIO_INSERTAR_MULTIPLE;
+    private String urlDominioInsertarMultiple;
     @Value("${endpoints.dominio-actualizar}")
-    private String URL_DOMINIO_ACTUALIZAR;
+    private String urlDominioActualizar;
     @Value("${endpoints.dominio-reportes}")
-    private String URL_REPORTES;
+    private String urlReportes;
 
     private final ObjectMapper mapper;
     private final ValeSalida valeSalida;
@@ -92,7 +78,7 @@ public class ValeSalidaServiceImpl implements ValeSalidaService {
             final DatosRequest datosRequest = valeSalida.crearVale(valeSalidaRequest, usuarioDto);
             response = restTemplate.consumirServicio(
                     datosRequest.getDatos(),
-                    URL_DOMINIO_INSERTAR_MULTIPLE,
+                    urlDominioInsertarMultiple,
                     authentication
             );
             if (response.getCodigo() != 200) {
@@ -122,7 +108,7 @@ public class ValeSalidaServiceImpl implements ValeSalidaService {
 
             Response<?> response = restTemplate.consumirServicio(
                     datosRequest.getDatos(),
-                    URL_DOMINIO_CONSULTA_PAGINADO,
+                    urlDominioConsultaPaginado,
                     authentication
             );
 
@@ -139,6 +125,11 @@ public class ValeSalidaServiceImpl implements ValeSalidaService {
     }
 
     @Override
+    public Response<?> consultarValesFiltros(DatosRequest request, Authentication authentication) throws IOException {
+        return consultarVales(request, authentication);
+    }
+
+    @Override
     public Response<?> consultarDetalle(DatosRequest request, Authentication authentication) throws IOException {
         try {
             Long idValeSalida = gson.fromJson(
@@ -149,7 +140,7 @@ public class ValeSalidaServiceImpl implements ValeSalidaService {
             DatosRequest datosRequest = valeSalida.consultar(idValeSalida, usuarioDto.getIdDelegacion());
 
             final Response<?> response = restTemplate.consumirServicio(datosRequest.getDatos(),
-                    URL_DOMINIO_CONSULTA,
+                    urlDominioConsulta,
                     authentication
             );
             if (response.getCodigo() != 200) {
@@ -164,7 +155,6 @@ public class ValeSalidaServiceImpl implements ValeSalidaService {
 
     @Override
     public Response<?> consultarDatosPantallaRegistro(DatosRequest request, Authentication authentication) throws IOException, ParseException {
-       // validarNivelUsuario(usuarioDto);
 
         ConsultaDatosPantallaRequest valeSalidaRequest = gson.fromJson(
                 String.valueOf(request.getDatos().get(AppConstantes.DATOS)),
@@ -176,7 +166,7 @@ public class ValeSalidaServiceImpl implements ValeSalidaService {
         final DatosRequest datosRequest = valeSalida.consultarDatosOds(valeSalidaRequest);
         final Response<?> response = restTemplate.consumirServicio(
                 datosRequest.getDatos(),
-                URL_DOMINIO_CONSULTA,
+                urlDominioConsulta,
                 authentication
         );
         return getValidacionResponse(response);
@@ -189,7 +179,7 @@ public class ValeSalidaServiceImpl implements ValeSalidaService {
         }
         Response<ValeSalidaDto> respuesta = getValeSalidaDtoResponse(response, listaValeSalidaResponse);
 
-        System.out.println(listaValeSalidaResponse.toString());
+        log.info("Se han recuperado correctamente los datos");
 
         return respuesta;
     }
@@ -209,7 +199,7 @@ public class ValeSalidaServiceImpl implements ValeSalidaService {
 
         final Response<?> responseModificarVale = restTemplate.consumirServicio(
                 datosRequest.getDatos(),
-                URL_DOMINIO_ACTUALIZAR,
+                urlDominioActualizar,
                 authentication
         );
         if (responseModificarVale.getError()) {
@@ -228,7 +218,7 @@ public class ValeSalidaServiceImpl implements ValeSalidaService {
         final DatosRequest datosRequest = valeSalida.modificarVale(valeSalidaDto, idUsuario, true);
         final Response<?> response = restTemplate.consumirServicio(
                 datosRequest.getDatos(),
-                URL_DOMINIO_ACTUALIZAR,
+                urlDominioActualizar,
                 authentication
         );
 
@@ -248,7 +238,7 @@ public class ValeSalidaServiceImpl implements ValeSalidaService {
         final DatosRequest datosRequest = valeSalida.cambiarEstatus(idValeSalida, idUsuario);
         final Response<?> response = restTemplate.consumirServicio(
                 datosRequest.getDatos(),
-                URL_DOMINIO_ACTUALIZAR,
+                urlDominioActualizar,
                 authentication
         );
         if (response.getError()) {
@@ -271,10 +261,9 @@ public class ValeSalidaServiceImpl implements ValeSalidaService {
     private void cambiarEstatusDetalleVale(Long idValeSalida, Integer idUsuario, int estatus, Authentication authentication) throws IOException {
         final DatosRequest datosRequest = valeSalida.cambiarEstatusDetalleValeSalida(idValeSalida, idUsuario, estatus);
         final Response<?> response = restTemplate.consumirServicio(datosRequest.getDatos(),
-                URL_DOMINIO_ACTUALIZAR,
+                urlDominioActualizar,
                 authentication);
         if (response.getCodigo() != 200) {
-            // todo - agregar el error adecuadamente
             throw new BadRequestException(HttpStatus.INTERNAL_SERVER_ERROR, "Error al eliminar los articulos relacionados");
         }
     }
@@ -288,7 +277,7 @@ public class ValeSalidaServiceImpl implements ValeSalidaService {
         final DatosRequest datosRequest = valeSalida.consultarFoliosOds(datosConsulta);
 
         return restTemplate.consumirServicio(datosRequest.getDatos(),
-                URL_DOMINIO_CONSULTA,
+                urlDominioConsulta,
                 authentication
         );
     }
@@ -335,7 +324,7 @@ public class ValeSalidaServiceImpl implements ValeSalidaService {
                 parametosReporte,
                 reporteDto.getRuta(),
                 reporteDto.getTipoReporte(),
-                URL_REPORTES,
+                urlReportes,
                 authentication
         );
 
@@ -353,7 +342,7 @@ public class ValeSalidaServiceImpl implements ValeSalidaService {
                 parametrosReporte,
                 filtros.getRuta(),
                 filtros.getTipoReporte(),
-                URL_REPORTES,
+                urlReportes,
                 authentication
         );
     }
@@ -382,29 +371,6 @@ public class ValeSalidaServiceImpl implements ValeSalidaService {
     }
 
     /**
-     * Actualiza el inventario de cada art&iacute;culo.
-     *
-     * @param articulos
-     * @param restar
-     * @param authentication
-     * @throws IOException
-     * @deprecated
-     */
-    private void actualizarInventario(List<DetalleValeSalidaRequest> articulos, boolean restar, Authentication authentication) throws IOException {
-        for (DetalleValeSalidaRequest articulo : articulos) {
-            final DatosRequest datosRequest = valeSalida.actualizarInventario(articulo, restar);
-
-            Response<?> response = restTemplate.consumirServicio(datosRequest.getDatos(),
-                    URL_DOMINIO_ACTUALIZAR,
-                    authentication
-            );
-            if (response.getCodigo() != 200) {
-                throw new BadRequestException(HttpStatus.BAD_REQUEST, "Error al actualizar el inventario");
-            }
-        }
-    }
-
-    /**
      * Actualiza el detalle del vale de salida
      *
      * @param idValeSalida
@@ -423,7 +389,7 @@ public class ValeSalidaServiceImpl implements ValeSalidaService {
             );
 
             Response<?> response = restTemplate.consumirServicio(datosRequest.getDatos(),
-                    URL_DOMINIO_CREAR,
+                    urlDominioCrear,
                     authentication
             );
             if (response.getCodigo() != 200) {
@@ -444,7 +410,6 @@ public class ValeSalidaServiceImpl implements ValeSalidaService {
         List<DetalleValeSalidaRequest> listaArticulos = new ArrayList<>();
         final Locale locale = new Locale("es", "MX");
         final SimpleDateFormat fechaSalidaFormatter = new SimpleDateFormat("dd-MM-yyyy", locale);
-        final SimpleDateFormat fechaEntradaFormatter = new SimpleDateFormat("dd MMMM yyyy", locale);
         for (ValeSalidaResponse valeSalidaResponse : listaValeSalidaResponse) {
             if (resultado == null) {
                 resultado = new ValeSalidaDto();
@@ -467,12 +432,13 @@ public class ValeSalidaServiceImpl implements ValeSalidaService {
                 resultado.setNombreResponsableEquipoVelacion(valeSalidaResponse.getNombreResponsableEquipo());
 
                 resultado.setDiasNovenario(valeSalidaResponse.getDiasNovenario());
+                final String patternFecha = "yyyy-MM-dd";
                 if (valeSalidaResponse.getFechaSalida() != null) {
-                    resultado.setFechaSalida(fechaSalidaFormatter.format(new SimpleDateFormat("yyyy-MM-dd").parse(valeSalidaResponse.getFechaSalida())));
+                    resultado.setFechaSalida(fechaSalidaFormatter.format(new SimpleDateFormat(patternFecha).parse(valeSalidaResponse.getFechaSalida())));
                 }
                 if (valeSalidaResponse.getFechaEntrada() != null) {
-                    resultado.setFechaEntrada(fechaSalidaFormatter.format(new SimpleDateFormat("yyyy-MM-dd").parse(valeSalidaResponse.getFechaEntrada())));
-                    resultado.setFechaEntradaTmp(new SimpleDateFormat("yyyy-MM-dd").parse(valeSalidaResponse.getFechaEntrada()));
+                    resultado.setFechaEntrada(fechaSalidaFormatter.format(new SimpleDateFormat(patternFecha).parse(valeSalidaResponse.getFechaEntrada())));
+                    resultado.setFechaEntradaTmp(new SimpleDateFormat(patternFecha).parse(valeSalidaResponse.getFechaEntrada()));
                 }
 
                 resultado.setCantidadArticulos(valeSalidaResponse.getTotalArticulos());

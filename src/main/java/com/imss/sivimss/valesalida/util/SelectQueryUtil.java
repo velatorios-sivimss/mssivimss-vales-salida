@@ -352,18 +352,6 @@ public class SelectQueryUtil {
         return this.union(selectQuery.build(), true);
     }
 
-    public SelectQueryUtil except(SelectQueryUtil selectQuery) {
-        validarSelectCalled();
-        return this;
-    }
-
-//    public String except(SelectQueryUtil selectQuery) {
-//        validarSelectCalled();
-//        return this.union(selectQuery.build(), true);
-//    }
-
-//    public String exceptAll
-
     public String intersect(SelectQueryUtil selectQuery) {
         validarSelectCalled();
         return this.intersect(selectQuery.build());
@@ -602,7 +590,6 @@ public class SelectQueryUtil {
      * @since 1.0.1
      */
     private String union(String build, boolean isAll) {
-        // todo - hacer la logica para validar si es un union all o no
         final String queryUnion = this.build();
         return queryUnion + SPACE +
                 UNION +
@@ -622,7 +609,6 @@ public class SelectQueryUtil {
     }
 
     /**
-     * todo - implementar
      *
      * @param build
      * @return
