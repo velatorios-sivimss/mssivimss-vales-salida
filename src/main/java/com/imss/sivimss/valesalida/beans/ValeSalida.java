@@ -315,7 +315,8 @@ public class ValeSalida {
                         "v.ID_VELATORIO = :idVelatorio")
                 .setParameter(PARAM_FOLIO_ODS, request.getFolioOds())
                 .setParameter(PARAM_ID_DELEGACION, request.getIdDelegacion())
-                .setParameter(PARAM_ID_VELATORIO, request.getIdVelatorio());
+                .setParameter(PARAM_ID_VELATORIO, request.getIdVelatorio())
+                .groupBy("inventario.ID_INVENTARIO");
 
         return getDatosRequest(queryUtil);
     }
