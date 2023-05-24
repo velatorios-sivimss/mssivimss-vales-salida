@@ -182,7 +182,7 @@ public class ValeSalida {
                 .append("ID_USUARIO_MODIFICA = ").append(idUsuario).append(", ")
                 .append("FEC_ACTUALIZACION = ").append(CURRENT_TIMESTAMP).append(" ")
                 .append("WHERE ")
-                .append(ID_VALE_SALIDA).append(" ").append(idValeSalida)
+                .append(ID_VALE_SALIDA).append(" = ").append(idValeSalida)
                 .append(" AND ")
                 .append(ID_ESTATUS).append(" = ").append(ESTATUS_SALIDA);
 
@@ -611,7 +611,7 @@ public class ValeSalida {
         StringBuilder queryBuilder = new StringBuilder("UPDATE SVT_VALE_SALIDA ");
         queryBuilder.append("SET ")
                 .append(ID_ESTATUS).append(" = ").append(ESTATUS_ELIMINADA).append(", ")
-                .append("ID_USUARIO_ACTUALIZA").append(" = ").append(idUsuario).append(", ")
+                .append("ID_USUARIO_MODIFICA").append(" = ").append(idUsuario).append(", ")
                 .append("FEC_ACTUALIZACION").append(" = ").append(CURRENT_TIMESTAMP)
                 .append(" WHERE ")
                 .append(ID_VALE_SALIDA).append(" = ").append(idValeSalida);
