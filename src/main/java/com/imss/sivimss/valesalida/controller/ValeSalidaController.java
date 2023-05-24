@@ -133,7 +133,8 @@ public class ValeSalidaController {
     @Retry(name = "msflujo", fallbackMethod = "fallbackGenerico")
     @TimeLimiter(name = "msflujo")
     @PostMapping("/descargar-reporte")
-    public CompletableFuture<?> descargarReporte(@RequestBody DatosRequest request, Authentication authentication) throws IOException, ParseException {
+    public CompletableFuture<?> descargarReporte(@RequestBody DatosRequest request, Authentication authentication)
+            throws IOException, ParseException {
 
         Response<?> response = valeSalidaService.generarReportePdf(request, authentication);
         return CompletableFuture
