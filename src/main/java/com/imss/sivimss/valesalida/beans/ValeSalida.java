@@ -49,6 +49,7 @@ public class ValeSalida {
     private static final String FEC_ALTA = "FEC_ALTA";
     private static final String CAN_ARTICULOS = "CAN_ARTICULOS";
 
+    private static final String DES_NOM_ARTICULO = "DES_NOM_ARTICULO";
     // params
     private static final String PARAM_ID_VELATORIO = "idVelatorio";
     private static final String PARAM_ID_VALE_SALIDA = "idValeSalida";
@@ -66,7 +67,7 @@ public class ValeSalida {
     private static final String SVT_DOMICILIO = "SVT_DOMICILIO";
     private static final String SVC_CP = "SVC_CP";
     private static final String ID_VELATORIO = "ID_VELATORIO";
-    private static final String NOM_VELATORIO = "NOM_VELATORIO";
+    private static final String NOM_VELATORIO = "DES_VELATORIO";
     private static final String FOLIO_ODS = "CVE_FOLIO";
 
 
@@ -89,8 +90,6 @@ public class ValeSalida {
                         ALIAS_ODS + "." + FOLIO_ODS + " as folioOds",
                         recuperaNombre(ALIAS_PER_CONTRATANTE, ALIAS_NOMBRE_CONTRATANTE),
                         recuperaNombre(ALIAS_PER_FINADO, ALIAS_NOMBRE_FINADO),
-//                        "perFinado." + NOM_PERSONA + " as nombreFinado",
-//                        "CONCAT(" + ALIAS_PER_CONTRATANTE + "." + NOM_PERSONA + ", ' ', " + ALIAS_PER_CONTRATANTE + ".NOM_PRIMER_APELLIDO, ' ', " + ALIAS_PER_CONTRATANTE + ".NOM_SEGUNDO_APELLIDO) as nombreContratante",
                         "vs.FEC_SALIDA as fechaSalida",
                         "vs.FEC_ENTRADA as fechaEntrada",
                         "vs.NUM_DIA_NOVENARIO as diasNovenario",
@@ -109,7 +108,7 @@ public class ValeSalida {
                         "cp.DES_MNPIO as municipio",
                         "cp.CVE_CODIGO_POSTAL as codigoPostal",
                         "dvs.ID_INVENTARIO as idArticulo",
-                        "inventario.NOM_ARTICULO as nombreArticulo",
+                        "inventario." + DES_NOM_ARTICULO + " as nombreArticulo",
                         "dvs.CAN_ARTICULOS as cantidadArticulos",
                         "dvs.DES_OBSERVACION as observaciones")
                 .from("SVT_VALE_SALIDA vs")
@@ -269,7 +268,7 @@ public class ValeSalida {
         SelectQueryUtil queryUtil = new SelectQueryUtil();
         queryUtil.select(
                         "v.ID_VELATORIO as idVelatorio",
-                        "v.NOM_VELATORIO as nombreVelatorio",
+                        "v." + NOM_VELATORIO + " as nombreVelatorio",
                         "d.DES_DELEGACION as nombreDelegacion",
                         "ods.ID_ORDEN_SERVICIO as idOds",
                         "ods.CVE_FOLIO as request",
@@ -285,7 +284,7 @@ public class ValeSalida {
                         "cp.DES_MNPIO as municipio",
                         "cp.CVE_CODIGO_POSTAL as codigoPostal",
                         "inventario.ID_INVENTARIO as idArticulo",
-                        "inventario.NOM_ARTICULO as nombreArticulo",
+                        "inventario." + DES_NOM_ARTICULO + " as nombreArticulo",
                         "inventario.CAN_STOCK as cantidadArticulos")
                 .from("SVC_ORDEN_SERVICIO ods")
                 .join("SVC_VELATORIO v")
@@ -540,7 +539,7 @@ public class ValeSalida {
         Map<String, Object> parametros = new HashMap<>();
         parametros.put("logoImss", "");
         parametros.put("logoSistema", "");
-        parametros.put("idValeSalida", reporteDto.getIdValeSalida());
+        parametros.put(PARAM_ID_VALE_SALIDA, reporteDto.getIdValeSalida());
         parametros.put("nombreDelegacion", reporteDto.getNombreDelegacion());
         parametros.put("nombreVelatorio", reporteDto.getNombreVelatorio());
         parametros.put("nombreResponsableEntrega", reporteDto.getNombreResponsableEntrega());
