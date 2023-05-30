@@ -81,6 +81,8 @@ public class ValeSalida {
     public DatosRequest consultar(long id, Integer idDelegacion) {
         SelectQueryUtil queryUtil = new SelectQueryUtil();
 
+        final String condicionEstatusEntrada = "dvs." + ID_ESTATUS + " = " + ESTATUS_ENTRADA;
+        final String condicionEstatusSalida = "dvs." + ID_ESTATUS + " = " + ESTATUS_SALIDA;
         queryUtil.select("vs." + ID_VALE_SALIDA + " as idValeSalida",
                         "vs.CVE_FOLIO as folioValeSalida",
                         "v." + ID_VELATORIO + " as idVelatorio",
@@ -135,10 +137,11 @@ public class ValeSalida {
                 .join(SVC_CP + " cp",
                         "cp.CVE_CODIGO_POSTAL = domicilio.DES_CP")
                 .leftJoin("SVT_VALE_SALIDADETALLE dvs",
-                        "dvs." + ID_VALE_SALIDA + " = vs." + ID_VALE_SALIDA, "dvs." + ID_ESTATUS + " = " + ESTATUS_SALIDA)
-                .or("dvs." + ID_ESTATUS + " = " + ESTATUS_ENTRADA)
+                        "dvs." + ID_VALE_SALIDA + " = vs." + ID_VALE_SALIDA,
+                        "(" + condicionEstatusSalida + " or " + condicionEstatusEntrada + ")")
                 .join("SVT_INVENTARIO inventario",
-                        "dvs.ID_INVENTARIO = inventario.ID_INVENTARIO");
+                        "dvs.ID_INVENTARIO = inventario.ID_INVENTARIO",
+                        "inventario.ID_TIPO_INVENTARIO = 1");
 
         queryUtil.where("vs." + ID_VALE_SALIDA + " = :idValeSalida",
                         "vs." + ID_ESTATUS + " <> " + ESTATUS_ELIMINADA)
@@ -551,7 +554,7 @@ public class ValeSalida {
         parametros.put("ciudad", reporteDto.getEstado());
         parametros.put("nombreResponsableInstalacion", reporteDto.getNombreResponsableInstalacion());
         parametros.put("matriculaResponsableInstalacion", reporteDto.getMatriculaResponsableInstalacion());
-        parametros.put("condition", "WHERE vsd.`ID_VALESALIDA` = " + reporteDto.getIdValeSalida() + " AND vsd." + ID_ESTATUS + " = 2 OR vsd." + ID_ESTATUS + " = 1");
+        parametros.put("condition", "WHERE vsd.`ID_VALESALIDA` = " + reporteDto.getIdValeSalida() + " AND (vsd." + ID_ESTATUS + " = 2 OR vsd." + ID_ESTATUS + " = 1)");
         parametros.put("nombreResponsableEquipo", reporteDto.getNombreResponsableEquipo());
         parametros.put("matriculaResponsableEquipo", reporteDto.getMatriculaResponsableEquipo());
 
