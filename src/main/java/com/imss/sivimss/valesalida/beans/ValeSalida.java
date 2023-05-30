@@ -7,11 +7,13 @@ import com.imss.sivimss.valesalida.util.AppConstantes;
 import com.imss.sivimss.valesalida.util.DatosRequest;
 import com.imss.sivimss.valesalida.util.QueryHelper;
 import com.imss.sivimss.valesalida.util.SelectQueryUtil;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 
 import javax.xml.bind.DatatypeConverter;
+import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -633,8 +635,9 @@ public class ValeSalida {
      * @param query
      * @return
      */
+    @SneakyThrows
     private static String getBinary(String query) {
-        return DatatypeConverter.printBase64Binary(query.getBytes());
+        return DatatypeConverter.printBase64Binary(query.getBytes(StandardCharsets.UTF_8));
     }
 
     /**
