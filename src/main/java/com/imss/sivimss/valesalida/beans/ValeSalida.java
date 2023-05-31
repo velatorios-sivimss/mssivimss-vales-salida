@@ -244,15 +244,13 @@ public class ValeSalida {
                 queryUtil.where("ods." + FOLIO_ODS + " = :folioOds")
                         .setParameter(PARAM_FOLIO_ODS, filtros.getFolioOds());
             }
-            if (filtros.getFechaInicio() != null && filtros.getFechaFinal() != null) {
-                if (filtros.validarFechas()) {
-                    queryUtil.where("vs.FEC_SALIDA >= :fechaInicial",
-                                    "vs.FEC_SALIDA <= :fechaFin")
-                            .setParameter("fechaInicial", filtros.getFechaInicio())
-                            .setParameter("fechaFin", filtros.getFechaFinal());
-                } else {
-                    throw new ValidacionFechasException(HttpStatus.BAD_REQUEST, "Rango inválido de fechas.");
-                }
+            if (filtros.getFechaInicio() != null) {
+                queryUtil.where("vs.FEC_SALIDA >= :fechaInicial")
+                        .setParameter("fechaInicial", filtros.getFechaInicio());
+            }
+            if (filtros.getFechaFinal() != null) {
+                queryUtil.where("vs.FEC_SALIDA <= :fechaFin")
+                        .setParameter("fechaFin", filtros.getFechaFinal());
             }
         }
         String query = getQuery(queryUtil);
@@ -372,6 +370,7 @@ public class ValeSalida {
 
         String queriesArticulos = crearDetalleVale(articulos, idUsuario);
         String query = queryHelper.obtenerQueryInsertar() + queriesArticulos;
+//        SelectQueryUtil.encryptQuery(query);
         parametros.put(AppConstantes.QUERY, getBinary(query));
         parametros.put("separador", "$$");
         parametros.put("replace", "idTabla");
@@ -556,7 +555,10 @@ public class ValeSalida {
         parametros.put("ciudad", reporteDto.getEstado());
         parametros.put("nombreResponsableInstalacion", reporteDto.getNombreResponsableInstalacion());
         parametros.put("matriculaResponsableInstalacion", reporteDto.getMatriculaResponsableInstalacion());
-        parametros.put("condition", "WHERE vsd.`ID_VALESALIDA` = " + reporteDto.getIdValeSalida() + " AND (vsd." + ID_ESTATUS + " = 2 OR vsd." + ID_ESTATUS + " = 1)");
+        final String condicion = "WHERE " +
+                "vsd.`ID_VALESALIDA` = " + reporteDto.getIdValeSalida() +
+                " AND (vsd." + ID_ESTATUS + " = 2 OR vsd." + ID_ESTATUS + " = 1)";
+        parametros.put("condition", condicion);
         parametros.put("nombreResponsableEquipo", reporteDto.getNombreResponsableEquipo());
         parametros.put("matriculaResponsableEquipo", reporteDto.getMatriculaResponsableEquipo());
 

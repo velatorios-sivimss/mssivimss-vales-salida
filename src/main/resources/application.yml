@@ -30,12 +30,15 @@ logos:
   msit_logo_sistema: ${msit_LOGO_SISTEMA}
 
 endpoints:
-  dominio-consulta: ${msit_GENERICO_CONSULTA}
-  dominio-consulta-paginado: ${msit_GENERICO_PAGINADO}
-  dominio-crear: ${msit_GENERICO_CREAR}
-  dominio-insertar-multiple: ${msit_GENERICO_INSERTAR_MULTIPLE}
-  dominio-actualizar: ${msit_GENERICO_ACTUALIZAR}
+  dominio-generico: ${msit_GENERICO_CONSULTA}
   dominio-reportes: ${msit_GENERICO_REPORTES}
+  rutas:
+    dominio-consulta: ${endpoints.dominio-generico}/consulta
+    dominio-consulta-paginado: ${endpoints.dominio-generico}/paginado
+    dominio-crear: ${endpoints.dominio-generico}/crear
+    dominio-insertar-multiple: ${endpoints.dominio-generico}/crearMultiple
+    dominio-actualizar: ${endpoints.dominio-generico}/actualizar
+    dominio-generar-reportes: ${endpoints.dominio-reportes}/generales/generar-reporte
 
 jwt:
   secretkey-flujo: ${msit_SECRET_KEY}
