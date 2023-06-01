@@ -35,17 +35,17 @@ public class ValeSalidaServiceImpl implements ValeSalidaService {
     private static final String MSG133_REGISTRO_ENTRADA_OK = "133";
 
     // endpoints
-    @Value("${endpoints.dominio-consulta}")
+    @Value("${endpoints.rutas.dominio-consulta}")
     private String urlDominioConsulta;
-    @Value("${endpoints.dominio-consulta-paginado}")
+    @Value("${endpoints.rutas.dominio-consulta-paginado}")
     private String urlDominioConsultaPaginado;
-    @Value("${endpoints.dominio-crear}")
+    @Value("${endpoints.rutas.dominio-crear}")
     private String urlDominioCrear;
-    @Value("${endpoints.dominio-insertar-multiple}")
+    @Value("${endpoints.rutas.dominio-insertar-multiple}")
     private String urlDominioInsertarMultiple;
-    @Value("${endpoints.dominio-actualizar}")
+    @Value("${endpoints.rutas.dominio-actualizar}")
     private String urlDominioActualizar;
-    @Value("${endpoints.dominio-reportes}")
+    @Value("${endpoints.rutas.dominio-generar-reportes}")
     private String urlReportes;
 
     private final ObjectMapper mapper;
@@ -320,13 +320,14 @@ public class ValeSalidaServiceImpl implements ValeSalidaService {
 
         Map<String, Object> parametosReporte = valeSalida.recuperarDatosFormato(reporteDto);
 
-        return restTemplate.consumirServicioReportes(
+        final Response<?> respuestaReporte = restTemplate.consumirServicioReportes(
                 parametosReporte,
                 reporteDto.getRuta(),
                 reporteDto.getTipoReporte(),
                 urlReportes,
                 authentication
         );
+        return respuestaReporte;
 
     }
 

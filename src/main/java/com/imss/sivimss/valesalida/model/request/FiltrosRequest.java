@@ -42,7 +42,8 @@ public class FiltrosRequest {
             Date fecha1 = sdf.parse(fechaInicio);
             Date fecha2 = sdf.parse(fechaFinal);
 
-            return fecha1.compareTo(fecha2) < 0;
+            final int i = fecha1.compareTo(fecha2);
+            return i <= 0;
         } catch (ParseException e) {
             throw new ValidacionFechasException(HttpStatus.BAD_REQUEST, e.getMessage());
         }
