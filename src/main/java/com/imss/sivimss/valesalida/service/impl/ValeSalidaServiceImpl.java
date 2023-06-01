@@ -334,18 +334,28 @@ public class ValeSalidaServiceImpl implements ValeSalidaService {
     @Override
     public Response<?> generarReporteTabla(DatosRequest request, Authentication authentication) throws IOException, ParseException {
 
-        ReporteTablaDto filtros = gson.fromJson(
-                String.valueOf(request.getDatos().get(AppConstantes.DATOS)),
-                ReporteTablaDto.class
-        );
-        Map<String, Object> parametrosReporte = valeSalida.recuperarDatosFormatoTabla(filtros);
-        return restTemplate.consumirServicioReportes(
-                parametrosReporte,
-                filtros.getRuta(),
-                filtros.getTipoReporte(),
-                urlReportes,
-                authentication
-        );
+        try {
+
+            ReporteTablaDto filtros = gson.fromJson(
+                    String.valueOf(request.getDatos().get(AppConstantes.DATOS)),
+                    ReporteTablaDto.class
+            );
+            Map<String, Object> parametrosReporte = valeSalida.recuperarDatosFormatoTabla(filtros);
+            return restTemplate.consumirServicioReportes(
+                    parametrosReporte,
+                    filtros.getRuta(),
+                    filtros.getTipoReporte(),
+                    urlReportes,
+                    authentication
+            );
+        } catch (Exception ex) {
+            log.error("Error al crear el reporte {}", ex);
+            Response<?> respuesta = new Response<>();
+            respuesta.setCodigo(HttpStatus.INTERNAL_SERVER_ERROR.value());
+            respuesta.setMensaje("");
+            respuesta.setError(true);
+            return MensajeResponseUtil.mensajeResponse(respuesta, "Error al generar el reporte");
+        }
     }
 
     /**
