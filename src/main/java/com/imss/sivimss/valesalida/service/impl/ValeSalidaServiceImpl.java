@@ -496,6 +496,7 @@ public class ValeSalidaServiceImpl implements ValeSalidaService {
                 resultado.setMunicipio(valeSalidaResponse.getMunicipio());
                 resultado.setEstado(valeSalidaResponse.getEstado());
                 resultado.setCp(valeSalidaResponse.getCodigoPostal());
+                resultado.setValidacionDias(valeSalidaResponse.getValidacionDias());
 
             }
 

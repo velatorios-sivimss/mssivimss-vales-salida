@@ -37,6 +37,8 @@ public class ValeSalidaResponse {
     private Integer cantidadArticulos;
     private String observaciones;
 
+    private Integer validacionDias;
+
     /**
      * Recupera el domicilio en una sola cadena
      *

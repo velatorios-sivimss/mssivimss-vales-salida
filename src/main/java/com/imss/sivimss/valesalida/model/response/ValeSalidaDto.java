@@ -51,6 +51,8 @@ public class ValeSalidaDto {
     private String estado;
     private String cp;
 
+    private Integer validacionDias;
+
     private List<DetalleValeSalidaRequest> articulos;
 
     public String recuperarDomicilio() {
