@@ -196,9 +196,7 @@ public class ValeSalidaServiceImpl implements ValeSalidaService {
         if (datosRegistroResponse.getDatos() == null) {
             datosRegistroResponse.setDatos(new ValeSalidaDto());
         }
-        if (!articulos.isEmpty()) {
-            datosRegistroResponse.getDatos().setArticulos(articulos);
-        }
+        datosRegistroResponse.getDatos().setArticulos(articulos);
 
         return datosRegistroResponse;
     }
