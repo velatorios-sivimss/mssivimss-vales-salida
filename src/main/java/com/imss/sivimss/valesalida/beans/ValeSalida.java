@@ -223,7 +223,8 @@ public class ValeSalida {
                         "vs.NOM_RESPON_INSTA as nombreResponsableInstalacion",
                         "vs.CAN_ARTICULOS as totalArticulos",
 //                        "CONCAT(" + ALIAS_PER_CONTRATANTE + ".NOM_PERSONA, ' ', " + ALIAS_PER_CONTRATANTE + ".NOM_PRIMER_APELLIDO, ' ', " + ALIAS_PER_CONTRATANTE + ".NOM_SEGUNDO_APELLIDO) as nombreContratante")
-                        recuperaNombre(ALIAS_PER_CONTRATANTE, ALIAS_NOMBRE_CONTRATANTE))
+                        recuperaNombre(ALIAS_PER_CONTRATANTE, ALIAS_NOMBRE_CONTRATANTE),
+                        "IF(DATEDIFF(NOW(), vs.FEC_SALIDA) >= IFNULL(vs.NUM_DIA_NOVENARIO, 0), 1, 0) as validacionDias")
                 .from("SVT_VALE_SALIDA vs")
                 .join("SVC_VELATORIO v",
                         "vs.ID_VELATORIO = v.ID_VELATORIO")
@@ -275,9 +276,7 @@ public class ValeSalida {
                         "d.DES_DELEGACION as nombreDelegacion",
                         "ods.ID_ORDEN_SERVICIO as idOds",
                         "ods.CVE_FOLIO as request",
-//                        "CONCAT(" + ALIAS_PER_CONTRATANTE + ".NOM_PERSONA, ' ', " + ALIAS_PER_CONTRATANTE + ".NOM_PRIMER_APELLIDO, ' ', " + ALIAS_PER_CONTRATANTE + ".NOM_SEGUNDO_APELLIDO) as nombreContratante",
                         recuperaNombre(ALIAS_PER_CONTRATANTE, ALIAS_NOMBRE_CONTRATANTE),
-//                        "CONCAT(perFinado.NOM_PERSONA, ' ', perFinado.NOM_PRIMER_APELLIDO, ' ', perFinado.NOM_SEGUNDO_APELLIDO) as nombreFinado",
                         recuperaNombre(ALIAS_PER_FINADO, ALIAS_NOMBRE_FINADO),
                         "domicilio.DES_CALLE as calle",
                         "domicilio.NUM_EXTERIOR as numExt",
@@ -285,10 +284,7 @@ public class ValeSalida {
                         "domicilio.DES_COLONIA as colonia",
                         "cp.DES_ESTADO as estado",
                         "cp.DES_MNPIO as municipio",
-                        "cp.CVE_CODIGO_POSTAL as codigoPostal",
-                        "inventario.ID_INVENTARIO as idArticulo",
-                        "inventario." + DES_NOM_ARTICULO + " as nombreArticulo",
-                        "inventario.CAN_STOCK as cantidadArticulos")
+                        "cp.CVE_CODIGO_POSTAL as codigoPostal")
                 .from("SVC_ORDEN_SERVICIO ods")
                 .join("SVC_VELATORIO v")
                 .join("SVC_DELEGACION d", "d.ID_DELEGACION = v.ID_DELEGACION")
@@ -305,10 +301,7 @@ public class ValeSalida {
                 .join("SVC_INFORMACION_SERVICIO_VELACION infoOds",
                         "infoOds.ID_INFORMACION_SERVICIO = infoServ.ID_INFORMACION_SERVICIO")
                 .join("SVT_DOMICILIO domicilio", "domicilio.ID_DOMICILIO = infoOds.ID_DOMICILIO")
-                .join("SVC_CP cp", "cp.CVE_CODIGO_POSTAL = domicilio.DES_CP")
-                .join("SVT_INVENTARIO inventario",
-                        "inventario.ID_VELATORIO = v.ID_VELATORIO",
-                        "inventario.ID_TIPO_SERVICIO = " + TIPO_SERVICIO_RENTA_EQUIPO);
+                .join("SVC_CP cp", "cp.CVE_CODIGO_POSTAL = domicilio.DES_CP");
 
         queryUtil.where(
                         "ods.CVE_FOLIO = :folioOds",
@@ -316,6 +309,35 @@ public class ValeSalida {
                         "d.ID_DELEGACION = :idDelegacion",
                         "v.ID_VELATORIO = :idVelatorio")
                 .setParameter(PARAM_FOLIO_ODS, request.getFolioOds())
+                .setParameter(PARAM_ID_DELEGACION, request.getIdDelegacion())
+                .setParameter(PARAM_ID_VELATORIO, request.getIdVelatorio())
+                .groupBy("ods.ID_ORDEN_SERVICIO");
+
+        return getDatosRequest(queryUtil);
+    }
+
+
+    /**
+     * Consulta una lista de art&iacute;culos ligados al Velatorio
+     *
+     * @param request
+     * @return
+     */
+    public DatosRequest consultarArticulosVelatorio(ConsultaDatosPantallaRequest request) {
+        SelectQueryUtil queryUtil = new SelectQueryUtil();
+        queryUtil.select(
+                        "inventario.ID_INVENTARIO as idArticulo",
+                        "inventario." + DES_NOM_ARTICULO + " as nombreArticulo",
+                        "inventario.CAN_STOCK as cantidadArticulos")
+                .from("SVT_INVENTARIO inventario")
+                .join("SVC_VELATORIO v",
+                        "inventario.ID_VELATORIO = v.ID_VELATORIO")
+                .join("SVC_DELEGACION d", "d.ID_DELEGACION = v.ID_DELEGACION")
+                .where("inventario.ID_TIPO_SERVICIO = " + TIPO_SERVICIO_RENTA_EQUIPO);
+
+        queryUtil.where(
+                        "d.ID_DELEGACION = :idDelegacion",
+                        "v.ID_VELATORIO = :idVelatorio")
                 .setParameter(PARAM_ID_DELEGACION, request.getIdDelegacion())
                 .setParameter(PARAM_ID_VELATORIO, request.getIdVelatorio())
                 .groupBy("inventario.ID_INVENTARIO");
