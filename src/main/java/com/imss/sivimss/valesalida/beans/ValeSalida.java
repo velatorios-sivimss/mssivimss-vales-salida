@@ -1,6 +1,5 @@
 package com.imss.sivimss.valesalida.beans;
 
-import com.imss.sivimss.valesalida.exception.ValidacionFechasException;
 import com.imss.sivimss.valesalida.model.request.*;
 import com.imss.sivimss.valesalida.model.response.ValeSalidaDto;
 import com.imss.sivimss.valesalida.util.AppConstantes;
@@ -9,7 +8,6 @@ import com.imss.sivimss.valesalida.util.QueryHelper;
 import com.imss.sivimss.valesalida.util.SelectQueryUtil;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 
 import javax.xml.bind.DatatypeConverter;
@@ -39,6 +37,8 @@ public class ValeSalida {
     private static final int ESTATUS_ELIMINADA = 0;
     private static final int ESTATUS_SALIDA = 1;
     private static final int ESTATUS_ENTRADA = 2;
+    private static final int ID_FUNCIONALIDAD = 10;
+    private static final int ID_FUNCIONALIDAD_VALE_SALIDA = 58;
     private static final String ID_VALE_SALIDA = "ID_VALESALIDA";
     private static final String ID_CONTRATANTE = "ID_CONTRATANTE";
     private static final String ID_PERSONA = "ID_PERSONA";
@@ -210,6 +210,14 @@ public class ValeSalida {
      */
     public DatosRequest consultarValesSalida(DatosRequest request, FiltrosRequest filtros) {
         SelectQueryUtil queryUtil = new SelectQueryUtil();
+        SelectQueryUtil queryParametroDiasNovenario = new SelectQueryUtil();
+
+        queryParametroDiasNovenario.select("TIP_PARAMETRO")
+                .from("SVC_PARAMETRO_SISTEMA parametro")
+                .where("parametro.ID_PARAMETRO = :idParametro",
+                        "parametro.id_funcionalidad = :idFuncionalidad")
+                .setParameter("idParametro", ID_FUNCIONALIDAD)
+                .setParameter("idFuncionalidad", ID_FUNCIONALIDAD_VALE_SALIDA);
 
         queryUtil.select(ID_VALE_SALIDA + " as idValeSalida",
                         "v." + ID_VELATORIO + " as idVelatorio",
@@ -222,9 +230,8 @@ public class ValeSalida {
                         "vs.NUM_DIA_NOVENARIO as diasNovenario",
                         "vs.NOM_RESPON_INSTA as nombreResponsableInstalacion",
                         "vs.CAN_ARTICULOS as totalArticulos",
-//                        "CONCAT(" + ALIAS_PER_CONTRATANTE + ".NOM_PERSONA, ' ', " + ALIAS_PER_CONTRATANTE + ".NOM_PRIMER_APELLIDO, ' ', " + ALIAS_PER_CONTRATANTE + ".NOM_SEGUNDO_APELLIDO) as nombreContratante")
                         recuperaNombre(ALIAS_PER_CONTRATANTE, ALIAS_NOMBRE_CONTRATANTE),
-                        "IF(DATEDIFF(NOW(), vs.FEC_SALIDA) >= IFNULL(vs.NUM_DIA_NOVENARIO, 0), 1, 0) as validacionDias")
+                        "IF(DATEDIFF(NOW(), vs.FEC_SALIDA) >= IFNULL(vs.NUM_DIA_NOVENARIO, (" + queryParametroDiasNovenario.build() + ")), 1, 0) as validacionDias")
                 .from("SVT_VALE_SALIDA vs")
                 .join("SVC_VELATORIO v",
                         "vs.ID_VELATORIO = v.ID_VELATORIO")
