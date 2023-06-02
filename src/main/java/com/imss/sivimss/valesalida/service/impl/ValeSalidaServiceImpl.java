@@ -139,10 +139,7 @@ public class ValeSalidaServiceImpl implements ValeSalidaService {
 
             DatosRequest datosRequest = valeSalida.consultar(idValeSalida, usuarioDto.getIdDelegacion());
 
-            final Response<?> response = restTemplate.consumirServicio(datosRequest.getDatos(),
-                    urlDominioConsulta,
-                    authentication
-            );
+            final Response<?> response = enviarPeticion(datosRequest, urlDominioConsulta, authentication);
             if (response.getCodigo() != 200) {
                 return MensajeResponseUtil.mensajeConsultaResponse(response, "agregar mensaje");
             }
@@ -156,20 +153,62 @@ public class ValeSalidaServiceImpl implements ValeSalidaService {
     @Override
     public Response<?> consultarDatosPantallaRegistro(DatosRequest request, Authentication authentication) throws IOException, ParseException {
 
-        ConsultaDatosPantallaRequest valeSalidaRequest = gson.fromJson(
-                String.valueOf(request.getDatos().get(AppConstantes.DATOS)),
-                ConsultaDatosPantallaRequest.class
-        );
-        if (valeSalidaRequest.validarDatosConsulta()) {
-            throw new BadRequestException(HttpStatus.BAD_REQUEST, "Los datos nos son correctos, favor de revisarlos.");
+        try {
+
+            ConsultaDatosPantallaRequest valeSalidaRequest = gson.fromJson(
+                    String.valueOf(request.getDatos().get(AppConstantes.DATOS)),
+                    ConsultaDatosPantallaRequest.class
+            );
+            if (valeSalidaRequest.validarDatosConsulta()) {
+                throw new BadRequestException(HttpStatus.BAD_REQUEST, "Los datos nos son correctos, favor de revisarlos.");
+            }
+            final DatosRequest datosConsultaRequest = valeSalida.consultarDatosOds(valeSalidaRequest);
+            final Response<?> datosConsultaResponse = enviarPeticion(datosConsultaRequest, urlDominioConsulta, authentication);
+            final DatosRequest datosConsultaArticulos = valeSalida.consultarArticulosVelatorio(valeSalidaRequest);
+            final Response<?> datosArticulosResponse = enviarPeticion(datosConsultaArticulos, urlDominioConsulta, authentication);
+
+            final Response<?> respuesta = agregarArticulos(datosConsultaResponse, datosArticulosResponse);
+
+            return respuesta;
+        } catch (Exception ex) {
+            log.error("Ha ocurrido un error al realizar la consulta");
+            return MensajeResponseUtil.mensajeResponse(new Response(), "Error al consultar los datos para el registro");
         }
-        final DatosRequest datosRequest = valeSalida.consultarDatosOds(valeSalidaRequest);
-        final Response<?> response = restTemplate.consumirServicio(
+    }
+
+    /**
+     * Agrega la lista de art&iacute;culos por velatorio a la consulta para el registro del <b>Vale de Salida</b>
+     *
+     * @param responseDatosRegistro
+     * @param responseArticulos
+     * @return
+     * @throws ParseException
+     */
+    private Response<?> agregarArticulos(Response<?> responseDatosRegistro, Response<?> responseArticulos) throws ParseException {
+
+        final List<ValeSalidaResponse> listaConsultaDatosRegistro = getListaValeSalidaResponse(responseDatosRegistro);
+        final Response<ValeSalidaDto> datosRegistroResponse = getValeSalidaDtoResponse(responseDatosRegistro, listaConsultaDatosRegistro);
+
+        final List<ValeSalidaResponse> listaConsultaArticulos = getListaValeSalidaResponse(responseArticulos);
+        final Response<ValeSalidaDto> articulosResponse = getValeSalidaDtoResponse(responseArticulos, listaConsultaArticulos);
+
+        final List<DetalleValeSalidaRequest> articulos = articulosResponse.getDatos() != null ? articulosResponse.getDatos().getArticulos() : new ArrayList<>();
+        if (datosRegistroResponse.getDatos() == null) {
+            datosRegistroResponse.setDatos(new ValeSalidaDto());
+        }
+        if (!articulos.isEmpty()) {
+            datosRegistroResponse.getDatos().setArticulos(articulos);
+        }
+
+        return datosRegistroResponse;
+    }
+
+    private Response<?> enviarPeticion(DatosRequest datosRequest, String url, Authentication authentication) throws IOException {
+        return restTemplate.consumirServicio(
                 datosRequest.getDatos(),
-                urlDominioConsulta,
+                url,
                 authentication
         );
-        return getValidacionResponse(response);
     }
 
     private Response<?> getValidacionResponse(Response<?> response) throws ParseException {
@@ -276,10 +315,7 @@ public class ValeSalidaServiceImpl implements ValeSalidaService {
         );
         final DatosRequest datosRequest = valeSalida.consultarFoliosOds(datosConsulta);
 
-        return restTemplate.consumirServicio(datosRequest.getDatos(),
-                urlDominioConsulta,
-                authentication
-        );
+        return enviarPeticion(datosRequest, urlDominioConsulta, authentication);
     }
 
     @Override
@@ -475,11 +511,11 @@ public class ValeSalidaServiceImpl implements ValeSalidaService {
         Response<ValeSalidaDto> respuesta = new Response<>();
         if (resultado != null) {
             resultado.setArticulos(listaArticulos);
-            respuesta.setCodigo(response.getCodigo());
-            respuesta.setMensaje(response.getMensaje());
-            respuesta.setError(response.getError());
-            respuesta.setDatos(resultado);
         }
+        respuesta.setDatos(resultado);
+        respuesta.setCodigo(response.getCodigo());
+        respuesta.setMensaje(response.getMensaje());
+        respuesta.setError(response.getError());
         return respuesta;
     }
 
@@ -490,6 +526,16 @@ public class ValeSalidaServiceImpl implements ValeSalidaService {
      * @return
      */
     private List<ValeSalidaResponse> getListaValeSalidaResponse(Response<?> response) {
+        final List<?> listaResponse = (ArrayList<?>) response.getDatos();
+        final List<ValeSalidaResponse> listaValeSalidaResponse = new ArrayList<>();
+        for (Object o : listaResponse) {
+            ValeSalidaResponse valeSalidaResponse = mapper.convertValue(o, ValeSalidaResponse.class);
+            listaValeSalidaResponse.add(valeSalidaResponse);
+        }
+        return listaValeSalidaResponse;
+    }
+
+    private List<ValeSalidaResponse> getListaValeSalidaResponse(Response<?> response, Class clazz) {
         final List<?> listaResponse = (ArrayList<?>) response.getDatos();
         final List<ValeSalidaResponse> listaValeSalidaResponse = new ArrayList<>();
         for (Object o : listaResponse) {
