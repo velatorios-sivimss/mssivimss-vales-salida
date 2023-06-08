@@ -33,7 +33,7 @@ logos:
 
 endpoints:
   dominio-generico: ${msit_GENERICO_CONSULTA}
-  dominio-reportes: ${msit_GENERICO_REPORTES}
+  dominio-reportes: ${msit_REPORTES_GENERALES}
   rutas:
     dominio-consulta: ${endpoints.dominio-generico}/consulta
     dominio-consulta-paginado: ${endpoints.dominio-generico}/paginado
