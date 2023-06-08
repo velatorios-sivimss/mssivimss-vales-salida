@@ -1,8 +1,10 @@
 server:
   port: 8080
   servlet:
-    contextPath: /mssivimss-vales-salida/v1
+    contextPath: /${spring.application.name}/v1
 spring:
+  application:
+    name: mssivimss-vales-salida
   mvc:
     pathmatch:
       matching-strategy: ANT_PATH_MATCHER
@@ -38,7 +40,7 @@ endpoints:
     dominio-crear: ${endpoints.dominio-generico}/crear
     dominio-insertar-multiple: ${endpoints.dominio-generico}/crearMultiple
     dominio-actualizar: ${endpoints.dominio-generico}/actualizar
-    dominio-generar-reportes: ${endpoints.dominio-reportes}/generales/generar-reporte
+#    dominio-generar-reportes: ${endpoints.dominio-reportes}/generales/generar-reporte
 
 jwt:
   secretkey-flujo: ${msit_SECRET_KEY}

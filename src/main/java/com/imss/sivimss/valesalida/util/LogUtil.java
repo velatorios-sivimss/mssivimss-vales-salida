@@ -16,8 +16,10 @@ import java.util.Date;
 public class LogUtil {
     @Value("${ruta-log}")
     private String rutaLog;
+    @Value("${spring.application.name}")
+    private String nombreAplicacion;
 
-    private String formatoFechaLog = new SimpleDateFormat("dd-MM-yyyy hh:mm:ss").format(new Date());
+    private final String formatoFechaLog = new SimpleDateFormat("dd-MM-yyyy hh:mm:ss").format(new Date());
 
     private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(LogUtil.class);
 
@@ -26,7 +28,7 @@ public class LogUtil {
         try {
             Gson json = new Gson();
             UsuarioDto usuarioDto = json.fromJson((String) authentication.getPrincipal(), UsuarioDto.class);
-            File archivo = new File(rutaLog + new SimpleDateFormat("ddMMyyyy").format(new Date()) + ".log");
+            File archivo = new File(rutaLog + nombreAplicacion + "_" + new SimpleDateFormat("ddMMyyyy").format(new Date()) + ".log");
             FileWriter escribirArchivo = new FileWriter(archivo, true);
             if (archivo.exists()) {
                 escribirArchivo.write("" + formatoFechaLog + " --- [" + tipoLog + "] " + origen + " " + clasePath + " : " + mensaje + " , Usuario: " + usuarioDto.getCveUsuario() + " - " + tiempoEjecucion);
