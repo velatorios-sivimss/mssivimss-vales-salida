@@ -45,7 +45,7 @@ public class ValeSalidaServiceImpl implements ValeSalidaService {
     private String urlDominioInsertarMultiple;
     @Value("${endpoints.rutas.dominio-actualizar}")
     private String urlDominioActualizar;
-    @Value("${endpoints.rutas.dominio-generar-reportes}")
+    @Value("${endpoints.dominio-reportes}")
     private String urlReportes;
 
     private final ObjectMapper mapper;
@@ -383,7 +383,7 @@ public class ValeSalidaServiceImpl implements ValeSalidaService {
                     authentication
             );
         } catch (Exception ex) {
-            log.error("Error al crear el reporte {}", ex);
+            log.error("Error al crear el reporte", ex);
             Response<?> respuesta = new Response<>();
             respuesta.setCodigo(HttpStatus.INTERNAL_SERVER_ERROR.value());
             respuesta.setMensaje("");
