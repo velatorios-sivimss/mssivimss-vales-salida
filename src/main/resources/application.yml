@@ -27,9 +27,6 @@ logging:
     org.springframework.web: info
     org.hibernate: error
 
-logos:
-  msit_logo_imss: ${msit_LOGO_IMSS}
-  msit_logo_sistema: ${msit_LOGO_SISTEMA}
 
 endpoints:
   dominio-generico: ${msit_GENERICO_CONSULTA}
