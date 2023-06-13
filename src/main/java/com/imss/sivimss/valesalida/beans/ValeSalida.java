@@ -108,9 +108,9 @@ public class ValeSalida {
                         "domicilio.NUM_EXTERIOR as numExt",
                         "domicilio.NUM_INTERIOR as numInt",
                         "domicilio.DES_COLONIA as colonia",
-                        "cp.DES_ESTADO as estado",
-                        "cp.DES_MNPIO as municipio",
-                        "cp.CVE_CODIGO_POSTAL as codigoPostal",
+                        "domicilio.DES_ESTADO as estado",
+                        "domicilio.DES_MUNICIPIO as municipio",
+                        "domicilio.DES_CP as codigoPostal",
                         "dvs.ID_INVENTARIO as idArticulo",
                         "IF(DATEDIFF(NOW(), vs.FEC_SALIDA) >= IFNULL(vs.NUM_DIA_NOVENARIO, (" + generarQueryParametros().build() + ")), 1, 0) as validacionDias",
                         "inventario." + DES_NOM_ARTICULO + " as nombreArticulo",
@@ -123,7 +123,6 @@ public class ValeSalida {
                         "vs." + ID_ORDEN_SERVICIO + " = " + ALIAS_ODS + "." + ID_ORDEN_SERVICIO,
                         ALIAS_ODS + ".ID_ESTATUS_ORDEN_SERVICIO = 2")
                 .join("SVC_FINADO " + ALIAS_USU_FINADO,
-                        "v." + ID_VELATORIO + " = " + ALIAS_USU_FINADO + "." + ID_VELATORIO,
                         ALIAS_USU_FINADO + "." + ID_ORDEN_SERVICIO + " = " + ALIAS_ODS + "." + ID_ORDEN_SERVICIO)
                 .join("SVC_PERSONA perFinado",
                         ALIAS_USU_FINADO + "." + ID_PERSONA + " = perFinado." + ID_PERSONA)
@@ -137,8 +136,6 @@ public class ValeSalida {
                         "infoOds.ID_INFORMACION_SERVICIO = infoServ.ID_INFORMACION_SERVICIO")
                 .join(SVT_DOMICILIO + " domicilio",
                         "domicilio.ID_DOMICILIO = infoOds.ID_DOMICILIO")
-                .join(SVC_CP + " cp",
-                        "cp.CVE_CODIGO_POSTAL = domicilio.DES_CP")
                 .leftJoin("SVT_VALE_SALIDADETALLE dvs",
                         "dvs." + ID_VALE_SALIDA + " = vs." + ID_VALE_SALIDA,
                         "(" + condicionEstatusSalida + " or " + condicionEstatusEntrada + ")")
