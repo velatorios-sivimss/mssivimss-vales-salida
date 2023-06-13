@@ -294,14 +294,14 @@ public class ValeSalida {
                         "domicilio.NUM_EXTERIOR as numExt",
                         "domicilio.NUM_INTERIOR as numInt",
                         "domicilio.DES_COLONIA as colonia",
-                        "cp.DES_ESTADO as estado",
-                        "cp.DES_MNPIO as municipio",
-                        "cp.CVE_CODIGO_POSTAL as codigoPostal")
+                        "domicilio.DES_ESTADO as estado",
+                        "domicilio.DES_MUNICIPIO as municipio",
+                        "domicilio.DES_CP as codigoPostal")
                 .from("SVC_ORDEN_SERVICIO ods")
-                .join("SVC_VELATORIO v")
+                .join("SVC_VELATORIO v",
+                        "v.ID_VELATORIO = ods.ID_VELATORIO")
                 .join("SVC_DELEGACION d", "d.ID_DELEGACION = v.ID_DELEGACION")
                 .join("SVC_FINADO " + ALIAS_USU_FINADO,
-                        "v.ID_VELATORIO = " + ALIAS_USU_FINADO + ".ID_VELATORIO",
                         ALIAS_USU_FINADO + ".ID_ORDEN_SERVICIO = ods.ID_ORDEN_SERVICIO")
                 .join(SVC_PERSONA + " perFinado",
                         ALIAS_USU_FINADO + "." + ID_PERSONA + " = perFinado." + ID_PERSONA)
@@ -312,8 +312,7 @@ public class ValeSalida {
                 .join("SVC_INFORMACION_SERVICIO infoServ", "infoServ.ID_ORDEN_SERVICIO = ods.ID_ORDEN_SERVICIO")
                 .join("SVC_INFORMACION_SERVICIO_VELACION infoOds",
                         "infoOds.ID_INFORMACION_SERVICIO = infoServ.ID_INFORMACION_SERVICIO")
-                .join("SVT_DOMICILIO domicilio", "domicilio.ID_DOMICILIO = infoOds.ID_DOMICILIO")
-                .join("SVC_CP cp", "cp.CVE_CODIGO_POSTAL = domicilio.DES_CP");
+                .join("SVT_DOMICILIO domicilio", "domicilio.ID_DOMICILIO = infoOds.ID_DOMICILIO");
 
         queryUtil.where(
                         "ods.CVE_FOLIO = :folioOds",
