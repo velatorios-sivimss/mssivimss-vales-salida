@@ -118,7 +118,7 @@ public class ValeSalida {
                         "dvs.DES_OBSERVACION as observaciones")
                 .from("SVT_VALE_SALIDA vs")
                 .join(SVC_VELATORIO + " v", "vs.ID_VELATORIO = v.ID_VELATORIO")
-                .join(SVC_DELEGACION + " d", "d.ID_DELEGACION = :idDelegacion")
+                .join(SVC_DELEGACION + " d", "d.ID_DELEGACION = v.ID_DELEGACION")
                 .join(SVC_ORDEN_SERVICIO + " " + ALIAS_ODS,
                         "vs." + ID_ORDEN_SERVICIO + " = " + ALIAS_ODS + "." + ID_ORDEN_SERVICIO,
                         ALIAS_ODS + ".ID_ESTATUS_ORDEN_SERVICIO = 2")
@@ -146,7 +146,7 @@ public class ValeSalida {
         queryUtil.where("vs." + ID_VALE_SALIDA + " = :idValeSalida",
                         "vs." + ID_ESTATUS + " <> " + ESTATUS_ELIMINADA)
                 .setParameter(PARAM_ID_VALE_SALIDA, id)
-                .setParameter(PARAM_ID_DELEGACION, idDelegacion)
+//                .setParameter(PARAM_ID_DELEGACION, idDelegacion)
                 .groupBy("dvs.ID_INVENTARIO");
 
         String query = getQuery(queryUtil);
