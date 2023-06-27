@@ -34,7 +34,7 @@ public class ValeSalidaServiceImpl implements ValeSalidaService {
     private static final String MSG131_REGISTRO_SALIDA_OK = "131";
     //    MSG133	Se ha registrado correctamente el registro de entrada del equipo de velación.
     private static final String MSG133_REGISTRO_ENTRADA_OK = "133";
-    private static final String MSG45_NO_SE_ENCONTRARON_RESULTADOS = "45";
+    private static final String MSG85_NO_SE_ENCONTRARON_RESULTADOS = "85";
 
     // endpoints
     @Value("${endpoints.rutas.dominio-consulta}")
@@ -194,7 +194,7 @@ public class ValeSalidaServiceImpl implements ValeSalidaService {
         final List<?> listaResponse = (ArrayList<?>) datosConsultaResponse.getDatos();
 //        final List<ValeSalidaResponse> listaValeSalidaResponse = new ArrayList<>();
         if (listaResponse.isEmpty()) {
-            throw new NoDataException("No se encontraron datos", MSG45_NO_SE_ENCONTRARON_RESULTADOS);
+            throw new NoDataException("No se encontraron datos", MSG85_NO_SE_ENCONTRARON_RESULTADOS);
         }
     }
 
