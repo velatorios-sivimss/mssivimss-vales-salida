@@ -8,6 +8,7 @@ import com.imss.sivimss.valesalida.util.QueryHelper;
 import com.imss.sivimss.valesalida.util.SelectQueryUtil;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.xml.bind.DatatypeConverter;
@@ -23,6 +24,8 @@ import java.util.*;
 @Component
 @Slf4j
 public class ValeSalida {
+    @Value("${formato_fecha}")
+    private String formatoFecha;
     private static final String ALIAS_ODS = "ods";
     private static final String ALIAS_USU_CONTRATANTE = "usuContratante";
     private static final String ALIAS_PER_CONTRATANTE = "perContratante";
@@ -69,6 +72,7 @@ public class ValeSalida {
     private static final String SVT_DOMICILIO = "SVT_DOMICILIO";
     private static final String SVC_CP = "SVC_CP";
     private static final String ID_VELATORIO = "ID_VELATORIO";
+    private static final String ID_DELEGACION = "ID_DELEGACION";
     private static final String NOM_VELATORIO = "DES_VELATORIO";
     private static final String FOLIO_ODS = "CVE_FOLIO";
 
@@ -80,11 +84,15 @@ public class ValeSalida {
      * @param idDelegacion
      * @return
      */
-    public DatosRequest consultar(long id, Integer idDelegacion) {
+    public DatosRequest consultarDetalle(long id, Integer idDelegacion) {
         SelectQueryUtil queryUtil = new SelectQueryUtil();
 
         final String condicionEstatusEntrada = "dvs." + ID_ESTATUS + " = " + ESTATUS_ENTRADA;
         final String condicionEstatusSalida = "dvs." + ID_ESTATUS + " = " + ESTATUS_SALIDA;
+//        String fechaSalida = "ifnull(vs.FEC_SALIDA, '-', dateformat(vs.FEC_SALIDA, " + formatoFecha + ")) as fechaSalida";
+//        String fechaEntrada = "ifnull(vs.FEC_ENTRADA, '-', dateformat(vs.FEC_ENTRADA, " + formatoFecha + ")) as fechaEntrada";
+//        String fechaSalida = "IF( DATEDIFF(NOW(), vs.FEC_SALIDA) >= " +
+//                "IFNULL(vs.NUM_DIA_NOVENARIO, (" + generarQueryParametros().build() + ")), 1, 0)"
         queryUtil.select("vs." + ID_VALE_SALIDA + " as idValeSalida",
                         "vs.CVE_FOLIO as folioValeSalida",
                         "v." + ID_VELATORIO + " as idVelatorio",
@@ -94,8 +102,10 @@ public class ValeSalida {
                         ALIAS_ODS + "." + FOLIO_ODS + " as folioOds",
                         recuperaNombre(ALIAS_PER_CONTRATANTE, ALIAS_NOMBRE_CONTRATANTE),
                         recuperaNombre(ALIAS_PER_FINADO, ALIAS_NOMBRE_FINADO),
-                        "vs.FEC_SALIDA as fechaSalida",
-                        "vs.FEC_ENTRADA as fechaEntrada",
+//                        fechaSalida,
+                        recuperarFechaConsulta("vs.FEC_SALIDA", "fechaSalida"),
+//                        fechaEntrada,
+                        recuperarFechaConsulta("vs.FEC_ENTRADA", "fechaEntrada"),
                         "vs.NUM_DIA_NOVENARIO as diasNovenario",
                         "vs.NOM_RESPON_INSTA as nombreResponsableInstalacion",
                         "vs.CVE_MATRICULA_RESINST as matriculaResponsableInstalacion",
@@ -209,19 +219,23 @@ public class ValeSalida {
     public DatosRequest consultarValesSalida(DatosRequest request, FiltrosRequest filtros) {
         SelectQueryUtil queryUtil = new SelectQueryUtil();
 
+        final String validacionDias = "IF(DATEDIFF(NOW(), vs.FEC_SALIDA) >= IFNULL(vs.NUM_DIA_NOVENARIO, (" + generarQueryParametros().build() + ")), 1, 0) as validacionDias";
+
         queryUtil.select(ID_VALE_SALIDA + " as idValeSalida",
                         "v." + ID_VELATORIO + " as idVelatorio",
                         "v." + NOM_VELATORIO + " as nombreVelatorio",
                         "vs.ID_ORDEN_SERVICIO as idOds",
                         ALIAS_ODS + ".CVE_FOLIO as folioOds",
-                        "vs.FEC_SALIDA as fechaSalida",
-                        "vs.FEC_ENTRADA as fechaEntrada",
+//                        "vs.FEC_SALIDA as fechaSalida",
+                        recuperarFechaConsulta("vs.FEC_SALIDA", "fechaSalida"),
+//                        "vs.FEC_ENTRADA as fechaEntrada",
+                        recuperarFechaConsulta("vs.FEC_ENTRADA", "fechaEntrada"),
                         "vs." + ID_ESTATUS + " as idEstatus",
                         "vs.NUM_DIA_NOVENARIO as diasNovenario",
                         "vs.NOM_RESPON_INSTA as nombreResponsableInstalacion",
                         "vs.CAN_ARTICULOS as totalArticulos",
                         recuperaNombre(ALIAS_PER_CONTRATANTE, ALIAS_NOMBRE_CONTRATANTE),
-                        "IF(DATEDIFF(NOW(), vs.FEC_SALIDA) >= IFNULL(vs.NUM_DIA_NOVENARIO, (" + generarQueryParametros().build() + ")), 1, 0) as validacionDias")
+                        validacionDias)
                 .from("SVT_VALE_SALIDA vs")
                 .join("SVC_VELATORIO v",
                         "vs.ID_VELATORIO = v.ID_VELATORIO")
@@ -234,6 +248,10 @@ public class ValeSalida {
                 .where("vs." + ID_ESTATUS + " <> " + ESTATUS_ELIMINADA);
 
         if (filtros != null && !filtros.validarNulos()) {
+            if (filtros.getIdDelegacion() != null) {
+                queryUtil.where("vs." + ID_DELEGACION + " = :idDelegacion")
+                        .setParameter(PARAM_ID_DELEGACION, filtros.getIdDelegacion());
+            }
             if (filtros.getIdVelatorio() != null) {
                 queryUtil.where("vs." + ID_VELATORIO + " = :idVelatorio")
                         .setParameter(PARAM_ID_VELATORIO, filtros.getIdVelatorio());
@@ -258,13 +276,30 @@ public class ValeSalida {
         return request;
     }
 
+    /**
+     * Recupera la sentencia sql para recuperar la fecha en caso de que exista
+     *
+     * @param campo
+     * @param alias
+     * @return
+     */
+    private String recuperarFechaConsulta(String campo, String alias) {
+        return "IF(" + campo + " is null, null, DATE_FORMAT(" + campo + ", '" + formatoFecha + "')) as " + alias;
+    }
+
+    /**
+     * Recupera el query para consultar el par&aacute;metro de los d&iacute;s de velaci&oacute;n en caso de que no se
+     * hayan capturado en el registro del Vale de Salida
+     *
+     * @return
+     */
     private static SelectQueryUtil generarQueryParametros() {
         SelectQueryUtil queryParametroDiasNovenario = new SelectQueryUtil();
 
         queryParametroDiasNovenario.select("TIP_PARAMETRO")
                 .from("SVC_PARAMETRO_SISTEMA parametro")
                 .where("parametro.ID_PARAMETRO = :idParametro",
-                        "parametro.id_funcionalidad = :idFuncionalidad")
+                        "parametro.ID_FUNCIONALIDAD = :idFuncionalidad")
                 .setParameter("idParametro", ID_FUNCIONALIDAD)
                 .setParameter("idFuncionalidad", ID_FUNCIONALIDAD_VALE_SALIDA);
         return queryParametroDiasNovenario;
