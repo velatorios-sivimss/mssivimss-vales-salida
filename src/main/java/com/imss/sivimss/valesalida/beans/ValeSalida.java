@@ -239,6 +239,8 @@ public class ValeSalida {
                 .from("SVT_VALE_SALIDA vs")
                 .join("SVC_VELATORIO v",
                         "vs.ID_VELATORIO = v.ID_VELATORIO")
+                .join("SVC_DELEGACION d",
+                        "d.ID_DELEGACION = v.ID_DELEGACION")
                 .join(SVC_ORDEN_SERVICIO + " " + ALIAS_ODS,
                         "vs.ID_ORDEN_SERVICIO = " + ALIAS_ODS + ".ID_ORDEN_SERVICIO")
                 .join(SVC_CONTRATANTE + " " + ALIAS_USU_CONTRATANTE,
@@ -249,7 +251,7 @@ public class ValeSalida {
 
         if (filtros != null && !filtros.validarNulos()) {
             if (filtros.getIdDelegacion() != null) {
-                queryUtil.where("vs." + ID_DELEGACION + " = :idDelegacion")
+                queryUtil.where("d." + ID_DELEGACION + " = :idDelegacion")
                         .setParameter(PARAM_ID_DELEGACION, filtros.getIdDelegacion());
             }
             if (filtros.getIdVelatorio() != null) {
