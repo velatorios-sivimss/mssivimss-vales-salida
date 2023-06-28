@@ -1,12 +1,19 @@
 package com.imss.sivimss.valesalida.exception;
 
-import com.imss.sivimss.valesalida.service.impl.ValeSalidaServiceImpl;
-
+/**
+ * @author esa
+ */
 public class NoDataException extends Exception {
-    private String codigo;
+
+    private static final String MSG85_NO_SE_ENCONTRARON_RESULTADOS = "85";
+    private final String codigo;
     public NoDataException(String message, String codigo) {
         super(message);
         this.codigo = codigo;
+    }
+    public NoDataException(String message) {
+        super(message);
+        this.codigo = MSG85_NO_SE_ENCONTRARON_RESULTADOS;
     }
 
     public String getCodigo() {

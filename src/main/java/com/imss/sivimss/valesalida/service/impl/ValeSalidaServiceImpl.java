@@ -77,6 +77,7 @@ public class ValeSalidaServiceImpl implements ValeSalidaService {
                 throw new BadRequestException(HttpStatus.BAD_REQUEST, "La lista de articulos no puede estar vacia");
             }
             UsuarioDto usuarioDto = gson.fromJson((String) authentication.getPrincipal(), UsuarioDto.class);
+            // consultar
             final DatosRequest datosRequest = valeSalida.crearVale(valeSalidaRequest, usuarioDto);
             response = restTemplate.consumirServicio(
                     datosRequest.getDatos(),
@@ -139,7 +140,7 @@ public class ValeSalidaServiceImpl implements ValeSalidaService {
                     Long.class);
             UsuarioDto usuarioDto = gson.fromJson((String) authentication.getPrincipal(), UsuarioDto.class);
 
-            DatosRequest datosRequest = valeSalida.consultar(idValeSalida, usuarioDto.getIdDelegacion());
+            DatosRequest datosRequest = valeSalida.consultarDetalle(idValeSalida, usuarioDto.getIdDelegacion());
 
             final Response<?> response = enviarPeticion(datosRequest, urlDominioConsulta, authentication);
             if (response.getCodigo() != 200) {
@@ -501,10 +502,12 @@ public class ValeSalidaServiceImpl implements ValeSalidaService {
                 resultado.setDiasNovenario(valeSalidaResponse.getDiasNovenario());
                 final String patternFecha = "yyyy-MM-dd";
                 if (valeSalidaResponse.getFechaSalida() != null) {
-                    resultado.setFechaSalida(fechaSalidaFormatter.format(new SimpleDateFormat(patternFecha).parse(valeSalidaResponse.getFechaSalida())));
+//                    resultado.setFechaSalida(fechaSalidaFormatter.format(new SimpleDateFormat(patternFecha).parse(valeSalidaResponse.getFechaSalida())));
+                    resultado.setFechaSalida(valeSalidaResponse.getFechaSalida());
                 }
                 if (valeSalidaResponse.getFechaEntrada() != null) {
-                    resultado.setFechaEntrada(fechaSalidaFormatter.format(new SimpleDateFormat(patternFecha).parse(valeSalidaResponse.getFechaEntrada())));
+//                    resultado.setFechaEntrada(fechaSalidaFormatter.format(new SimpleDateFormat(patternFecha).parse(valeSalidaResponse.getFechaEntrada())));
+                    resultado.setFechaEntrada(valeSalidaResponse.getFechaEntrada());
                     resultado.setFechaEntradaTmp(new SimpleDateFormat(patternFecha).parse(valeSalidaResponse.getFechaEntrada()));
                 }
 
