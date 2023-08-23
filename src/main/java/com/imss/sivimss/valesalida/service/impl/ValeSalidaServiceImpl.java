@@ -144,12 +144,15 @@ public class ValeSalidaServiceImpl implements ValeSalidaService {
 
             final Response<?> response = enviarPeticion(datosRequest, urlDominioConsulta, authentication);
             if (response.getCodigo() != 200) {
-                return MensajeResponseUtil.mensajeConsultaResponse(response, "agregar mensaje");
+                return MensajeResponseUtil.mensajeConsultaResponse(response, "Ha ocurrido un error al realizar la consulta");
             }
 
             return getValidacionResponse(response);
+        } catch (BadRequestException ex) {
+            throw ex;
         } catch (Exception e) {
-            throw new BadRequestException(HttpStatus.INTERNAL_SERVER_ERROR, "Error al consultar el detalle del vale");
+            log.error("Ha ocurrido un error, {}", e.getMessage());
+            return MensajeResponseUtil.mensajeResponse(crearResponse(true), "Ha ocurrido un error al realizar la consulta");
         }
     }
 
@@ -176,24 +179,34 @@ public class ValeSalidaServiceImpl implements ValeSalidaService {
             return respuesta;
         } catch (NoDataException ex) {
             log.error("No se han recuperado registros de la consulta");
-            return MensajeResponseUtil.mensajeResponse(crearResponse(), ex.getCodigo());
+            return MensajeResponseUtil.mensajeResponse(crearResponse(false), ex.getCodigo());
         } catch (Exception ex) {
             log.error("Ha ocurrido un error al realizar la consulta");
-            return MensajeResponseUtil.mensajeResponse(crearResponse(), "Error al consultar los datos para el registro");
+            return MensajeResponseUtil.mensajeResponse(crearResponse(true), "Error al consultar los datos para el registro");
         }
     }
 
-    private Response<?> crearResponse() {
+    /**
+     * Crea la respuesta en el caso de que ocurra un error.
+     *
+     * @return
+     */
+    private Response<?> crearResponse(boolean error) {
         Response<?> response = new Response<>();
         response.setMensaje("Ha ocurrido un error");
-        response.setError(true);
-        response.setCodigo(HttpStatus.OK.value());
+        response.setError(error);
+        response.setCodigo(error ? HttpStatus.INTERNAL_SERVER_ERROR.value() : HttpStatus.OK.value());
         return response;
     }
 
+    /**
+     * Valida si la respuesta contiene informaci&oacute;n.
+     *
+     * @param datosConsultaResponse
+     * @throws NoDataException
+     */
     private void validarRespuesta(Response<?> datosConsultaResponse) throws NoDataException {
         final List<?> listaResponse = (ArrayList<?>) datosConsultaResponse.getDatos();
-//        final List<ValeSalidaResponse> listaValeSalidaResponse = new ArrayList<>();
         if (listaResponse.isEmpty()) {
             throw new NoDataException("No se encontraron datos", MSG85_NO_SE_ENCONTRARON_RESULTADOS);
         }
@@ -232,10 +245,17 @@ public class ValeSalidaServiceImpl implements ValeSalidaService {
         );
     }
 
+    /**
+     * Recupera la lista de la consulta de vales de salida.
+     *
+     * @param response
+     * @return
+     * @throws ParseException
+     */
     private Response<?> getValidacionResponse(Response<?> response) throws ParseException {
         final List<ValeSalidaResponse> listaValeSalidaResponse = getListaValeSalidaResponse(response);
         if (listaValeSalidaResponse.isEmpty()) {
-            return MensajeResponseUtil.mensajeConsultaResponse(response, "45");
+            throw new BadRequestException(HttpStatus.NOT_FOUND, "45");
         }
         Response<ValeSalidaDto> respuesta = getValeSalidaDtoResponse(response, listaValeSalidaResponse);
 
@@ -341,51 +361,62 @@ public class ValeSalidaServiceImpl implements ValeSalidaService {
 
     @Override
     public Response<?> generarReportePdf(DatosRequest request, Authentication authentication) throws IOException, ParseException {
-        String datosJson = String.valueOf(request.getDatos().get(AppConstantes.DATOS));
-        ReporteDto reporteDto = gson.fromJson(datosJson, ReporteDto.class);
 
-        DatosRequest datosRequest = request;
-        Map<String, Object> parametros = new HashMap<>();
-        parametros.put("id", reporteDto.getIdValeSalida());
-        datosRequest.setDatos(parametros);
-        final Response<?> response = consultarDetalle(request, authentication);
-        ValeSalidaDto datosValeSalida = mapper.convertValue(response.getDatos(), ValeSalidaDto.class);
+        try {
 
-        reporteDto.setNombreDelegacion(datosValeSalida.getNombreDelegacion());
-        reporteDto.setNombreVelatorio(datosValeSalida.getNombreVelatorio());
+            String datosJson = String.valueOf(request.getDatos().get(AppConstantes.DATOS));
+            ReporteDto reporteDto = gson.fromJson(datosJson, ReporteDto.class);
 
-        reporteDto.setNombreResponsableEntrega(datosValeSalida.getNombreResponsableEntrega());
-        reporteDto.setMatriculaResponsableEntrega(datosValeSalida.getMatriculaResponsableEntrega());
+            DatosRequest datosRequest = request;
+            Map<String, Object> parametros = new HashMap<>();
+            parametros.put("id", reporteDto.getIdValeSalida());
+            datosRequest.setDatos(parametros);
 
-        reporteDto.setNombreResponsableInstalacion(datosValeSalida.getNombreResponsableInstalacion());
-        reporteDto.setMatriculaResponsableInstalacion(datosValeSalida.getMatriculaResponsableInstalacion());
+            final Response<?> response = consultarDetalle(request, authentication);
 
-        reporteDto.setNombreResponsableEquipo(datosValeSalida.getNombreResponsableEquipoVelacion());
-        reporteDto.setMatriculaResponsableEquipo(datosValeSalida.getMatriculaResponsableEquipoVelacion());
+            ValeSalidaDto datosValeSalida = mapper.convertValue(response.getDatos(), ValeSalidaDto.class);
 
-        reporteDto.setDiasNovenario(datosValeSalida.getDiasNovenario());
-        reporteDto.setFolioOds(datosValeSalida.getFolioOds());
-        reporteDto.setDomicilio(datosValeSalida.recuperarDomicilio());
-        reporteDto.setEstado(datosValeSalida.getEstado());
+            reporteDto.setNombreDelegacion(datosValeSalida.getNombreDelegacion());
+            reporteDto.setNombreVelatorio(datosValeSalida.getNombreVelatorio());
 
-        reporteDto.setArticulos(datosValeSalida.getArticulos());
+            reporteDto.setNombreResponsableEntrega(datosValeSalida.getNombreResponsableEntrega());
+            reporteDto.setMatriculaResponsableEntrega(datosValeSalida.getMatriculaResponsableEntrega());
 
-        reporteDto.setFechaEntrega(datosValeSalida.getFechaEntrada());
-        reporteDto.setFechaEntregaTmp(datosValeSalida.getFechaEntradaTmp());
-        reporteDto.setFechaSalida(datosValeSalida.getFechaSalida());
-        reporteDto.setNombreContratante(datosValeSalida.getNombreContratante());
+            reporteDto.setNombreResponsableInstalacion(datosValeSalida.getNombreResponsableInstalacion());
+            reporteDto.setMatriculaResponsableInstalacion(datosValeSalida.getMatriculaResponsableInstalacion());
 
-        Map<String, Object> parametosReporte = valeSalida.recuperarDatosFormato(reporteDto);
+            reporteDto.setNombreResponsableEquipo(datosValeSalida.getNombreResponsableEquipoVelacion());
+            reporteDto.setMatriculaResponsableEquipo(datosValeSalida.getMatriculaResponsableEquipoVelacion());
 
-        final Response<?> respuestaReporte = restTemplate.consumirServicioReportes(
-                parametosReporte,
-                reporteDto.getRuta(),
-                reporteDto.getTipoReporte(),
-                urlReportes,
-                authentication
-        );
-        return respuestaReporte;
+            reporteDto.setDiasNovenario(datosValeSalida.getDiasNovenario());
+            reporteDto.setFolioOds(datosValeSalida.getFolioOds());
+            reporteDto.setDomicilio(datosValeSalida.recuperarDomicilio());
+            reporteDto.setEstado(datosValeSalida.getEstado());
 
+            reporteDto.setArticulos(datosValeSalida.getArticulos());
+
+            reporteDto.setFechaEntrega(datosValeSalida.getFechaEntrada());
+            reporteDto.setFechaEntregaTmp(datosValeSalida.getFechaEntradaTmp());
+            reporteDto.setFechaSalida(datosValeSalida.getFechaSalida());
+            reporteDto.setNombreContratante(datosValeSalida.getNombreContratante());
+
+            Map<String, Object> parametosReporte = valeSalida.recuperarDatosFormato(reporteDto);
+
+            return restTemplate.consumirServicioReportes(
+                    parametosReporte,
+                    reporteDto.getRuta(),
+                    reporteDto.getTipoReporte(),
+                    urlReportes,
+                    authentication
+            );
+
+        } catch (BadRequestException ex) {
+            log.error("Ha ocurrido un error al consultar el vale de salida, {}", ex.getMessage());
+            return MensajeResponseUtil.mensajeResponse(crearResponse(false), "45");
+        } catch (Exception ex) {
+            log.error("Ha ocurrido un error, {}", ex.getMessage());
+            return MensajeResponseUtil.mensajeResponse(crearResponse(true), "Ha ocurrido un error");
+        }
     }
 
     @Override
@@ -479,6 +510,7 @@ public class ValeSalidaServiceImpl implements ValeSalidaService {
         final Locale locale = new Locale("es", "MX");
         final SimpleDateFormat fechaSalidaFormatter = new SimpleDateFormat("dd-MM-yyyy", locale);
         for (ValeSalidaResponse valeSalidaResponse : listaValeSalidaResponse) {
+
             if (resultado == null) {
                 resultado = new ValeSalidaDto();
                 resultado.setIdValeSalida(valeSalidaResponse.getIdValeSalida());
@@ -502,11 +534,9 @@ public class ValeSalidaServiceImpl implements ValeSalidaService {
                 resultado.setDiasNovenario(valeSalidaResponse.getDiasNovenario());
                 final String patternFecha = "yyyy-MM-dd";
                 if (valeSalidaResponse.getFechaSalida() != null) {
-//                    resultado.setFechaSalida(fechaSalidaFormatter.format(new SimpleDateFormat(patternFecha).parse(valeSalidaResponse.getFechaSalida())));
                     resultado.setFechaSalida(valeSalidaResponse.getFechaSalida());
                 }
                 if (valeSalidaResponse.getFechaEntrada() != null) {
-//                    resultado.setFechaEntrada(fechaSalidaFormatter.format(new SimpleDateFormat(patternFecha).parse(valeSalidaResponse.getFechaEntrada())));
                     resultado.setFechaEntrada(valeSalidaResponse.getFechaEntrada());
                     resultado.setFechaEntradaTmp(new SimpleDateFormat(patternFecha).parse(valeSalidaResponse.getFechaEntrada()));
                 }
@@ -550,16 +580,6 @@ public class ValeSalidaServiceImpl implements ValeSalidaService {
      * @return
      */
     private List<ValeSalidaResponse> getListaValeSalidaResponse(Response<?> response) {
-        final List<?> listaResponse = (ArrayList<?>) response.getDatos();
-        final List<ValeSalidaResponse> listaValeSalidaResponse = new ArrayList<>();
-        for (Object o : listaResponse) {
-            ValeSalidaResponse valeSalidaResponse = mapper.convertValue(o, ValeSalidaResponse.class);
-            listaValeSalidaResponse.add(valeSalidaResponse);
-        }
-        return listaValeSalidaResponse;
-    }
-
-    private List<ValeSalidaResponse> getListaValeSalidaResponse(Response<?> response, Class clazz) {
         final List<?> listaResponse = (ArrayList<?>) response.getDatos();
         final List<ValeSalidaResponse> listaValeSalidaResponse = new ArrayList<>();
         for (Object o : listaResponse) {
