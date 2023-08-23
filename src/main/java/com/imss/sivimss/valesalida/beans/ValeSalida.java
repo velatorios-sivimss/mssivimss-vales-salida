@@ -68,7 +68,7 @@ public class ValeSalida {
     private static final String SVC_CONTRATANTE = "SVC_CONTRATANTE";
     private static final String SVC_PERSONA = "SVC_PERSONA";
     private static final String SVC_INFORMACION_SERVICIO = "SVC_INFORMACION_SERVICIO";
-    private static final String SVC_INFORMACION_SERVICIO_VELACION = "SVC_INFORMACION_SERVICIO_VELACION";
+    private static final String SVC_INFORMACION_SERVICIO_VELACION = "SVC_INF_SERVICIO_VELACION";
     private static final String SVT_DOMICILIO = "SVT_DOMICILIO";
     private static final String SVC_CP = "SVC_CP";
     private static final String ID_VELATORIO = "ID_VELATORIO";
@@ -89,10 +89,7 @@ public class ValeSalida {
 
         final String condicionEstatusEntrada = "dvs." + ID_ESTATUS + " = " + ESTATUS_ENTRADA;
         final String condicionEstatusSalida = "dvs." + ID_ESTATUS + " = " + ESTATUS_SALIDA;
-//        String fechaSalida = "ifnull(vs.FEC_SALIDA, '-', dateformat(vs.FEC_SALIDA, " + formatoFecha + ")) as fechaSalida";
-//        String fechaEntrada = "ifnull(vs.FEC_ENTRADA, '-', dateformat(vs.FEC_ENTRADA, " + formatoFecha + ")) as fechaEntrada";
-//        String fechaSalida = "IF( DATEDIFF(NOW(), vs.FEC_SALIDA) >= " +
-//                "IFNULL(vs.NUM_DIA_NOVENARIO, (" + generarQueryParametros().build() + ")), 1, 0)"
+
         queryUtil.select("vs." + ID_VALE_SALIDA + " as idValeSalida",
                         "vs.CVE_FOLIO as folioValeSalida",
                         "v." + ID_VELATORIO + " as idVelatorio",
@@ -102,9 +99,7 @@ public class ValeSalida {
                         ALIAS_ODS + "." + FOLIO_ODS + " as folioOds",
                         recuperaNombre(ALIAS_PER_CONTRATANTE, ALIAS_NOMBRE_CONTRATANTE),
                         recuperaNombre(ALIAS_PER_FINADO, ALIAS_NOMBRE_FINADO),
-//                        fechaSalida,
                         recuperarFechaConsulta("vs.FEC_SALIDA", "fechaSalida"),
-//                        fechaEntrada,
                         recuperarFechaConsulta("vs.FEC_ENTRADA", "fechaEntrada"),
                         "vs.NUM_DIA_NOVENARIO as diasNovenario",
                         "vs.NOM_RESPON_INSTA as nombreResponsableInstalacion",
@@ -130,8 +125,7 @@ public class ValeSalida {
                 .join(SVC_VELATORIO + " v", "vs.ID_VELATORIO = v.ID_VELATORIO")
                 .join(SVC_DELEGACION + " d", "d.ID_DELEGACION = v.ID_DELEGACION")
                 .join(SVC_ORDEN_SERVICIO + " " + ALIAS_ODS,
-                        "vs." + ID_ORDEN_SERVICIO + " = " + ALIAS_ODS + "." + ID_ORDEN_SERVICIO,
-                        ALIAS_ODS + ".ID_ESTATUS_ORDEN_SERVICIO = 2")
+                        "vs." + ID_ORDEN_SERVICIO + " = " + ALIAS_ODS + "." + ID_ORDEN_SERVICIO)
                 .join("SVC_FINADO " + ALIAS_USU_FINADO,
                         ALIAS_USU_FINADO + "." + ID_ORDEN_SERVICIO + " = " + ALIAS_ODS + "." + ID_ORDEN_SERVICIO)
                 .join("SVC_PERSONA perFinado",
@@ -156,7 +150,6 @@ public class ValeSalida {
         queryUtil.where("vs." + ID_VALE_SALIDA + " = :idValeSalida",
                         "vs." + ID_ESTATUS + " <> " + ESTATUS_ELIMINADA)
                 .setParameter(PARAM_ID_VALE_SALIDA, id)
-//                .setParameter(PARAM_ID_DELEGACION, idDelegacion)
                 .groupBy("dvs.ID_INVENTARIO");
 
         String query = getQuery(queryUtil);
@@ -226,9 +219,7 @@ public class ValeSalida {
                         "v." + NOM_VELATORIO + " as nombreVelatorio",
                         "vs.ID_ORDEN_SERVICIO as idOds",
                         ALIAS_ODS + ".CVE_FOLIO as folioOds",
-//                        "vs.FEC_SALIDA as fechaSalida",
                         recuperarFechaConsulta("vs.FEC_SALIDA", "fechaSalida"),
-//                        "vs.FEC_ENTRADA as fechaEntrada",
                         recuperarFechaConsulta("vs.FEC_ENTRADA", "fechaEntrada"),
                         "vs." + ID_ESTATUS + " as idEstatus",
                         "vs.NUM_DIA_NOVENARIO as diasNovenario",
@@ -344,7 +335,7 @@ public class ValeSalida {
                 .join(SVC_PERSONA + " " + ALIAS_PER_CONTRATANTE,
                         "usuContratante.ID_PERSONA = " + ALIAS_PER_CONTRATANTE + ".ID_PERSONA")
                 .join("SVC_INFORMACION_SERVICIO infoServ", "infoServ.ID_ORDEN_SERVICIO = ods.ID_ORDEN_SERVICIO")
-                .join("SVC_INFORMACION_SERVICIO_VELACION infoOds",
+                .join(SVC_INFORMACION_SERVICIO_VELACION + " infoOds",
                         "infoOds.ID_INFORMACION_SERVICIO = infoServ.ID_INFORMACION_SERVICIO")
                 .join("SVT_DOMICILIO domicilio", "domicilio.ID_DOMICILIO = infoOds.ID_DOMICILIO");
 
@@ -437,7 +428,6 @@ public class ValeSalida {
 
         String queriesArticulos = crearDetalleVale(articulos, idUsuario);
         String query = queryHelper.obtenerQueryInsertar() + queriesArticulos;
-//        SelectQueryUtil.encryptQuery(query);
         parametros.put(AppConstantes.QUERY, getBinary(query));
         parametros.put("separador", "$$");
         parametros.put("replace", "idTabla");
