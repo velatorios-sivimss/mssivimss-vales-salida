@@ -646,10 +646,10 @@ public class ValeSalida {
             parametros.put("mesFechaEntrega", mes.format(dateF).toUpperCase());
             DateFormat anio = new SimpleDateFormat("yyyy", new Locale("es", "MX"));
             parametros.put("anioFechaEntrega", anio.format(dateF));
-
+            parametros.put("ciudad", reporteDto.getEstado());
         }
 
-        parametros.put("ciudad", reporteDto.getEstado());
+        
 
         parametros.put("rutaNombreReporte", reporteDto.getRuta());
         parametros.put("tipoReporte", reporteDto.getTipoReporte());
