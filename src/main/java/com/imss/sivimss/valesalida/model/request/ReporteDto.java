@@ -36,4 +36,5 @@ public class ReporteDto {
     private String condition;
     private String ruta;
     private String tipoReporte;
+    private String version;
 }

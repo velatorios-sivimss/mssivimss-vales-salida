@@ -13,6 +13,7 @@ import org.springframework.stereotype.Component;
 
 import javax.xml.bind.DatatypeConverter;
 import java.nio.charset.StandardCharsets;
+import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -153,6 +154,7 @@ public class ValeSalida {
                 .groupBy("dvs.ID_INVENTARIO");
 
         String query = getQuery(queryUtil);
+        log.info("query--> "+query);
         final String encoded = getBinary(query);
         Map<String, Object> parametros = new HashMap<>();
         parametros.put(AppConstantes.QUERY, encoded);
@@ -618,20 +620,32 @@ public class ValeSalida {
         parametros.put("condition", condicion);
         parametros.put("nombreResponsableEquipo", reporteDto.getNombreResponsableEquipo());
         parametros.put("matriculaResponsableEquipo", reporteDto.getMatriculaResponsableEquipo());
-
+       if(reporteDto.getVersion()==null) {
+    	   parametros.put("version", "1.0");
+       }else {
+    	   parametros.put("version", reporteDto.getVersion());
+       }
         parametros.put(ALIAS_NOMBRE_CONTRATANTE, reporteDto.getNombreContratante());
-
+         //  reporteDto.setFechaEntrega(null);
         if (reporteDto.getFechaEntrega() != null && !reporteDto.getFechaEntrega().isEmpty()) {
-            final SimpleDateFormat dateFormatter = new SimpleDateFormat("dd MMMM yyyy", new Locale("es", "MX"));
+        	 Date dateF = new SimpleDateFormat("dd/MM/yyyy").parse(reporteDto.getFechaEntrega());
+          /*  final SimpleDateFormat dateFormatter = new SimpleDateFormat("dd MMMM yyyy", new Locale("es", "MX"));
+           log.info("fecha temp -->"+reporteDto.getFechaEntregaTmp());
+      
             String fechaFormateada = dateFormatter.format(reporteDto.getFechaEntregaTmp());
             String[] arregloFechas = fechaFormateada.split(" ");
             String dia = arregloFechas[0];
             String mes = arregloFechas[1].toUpperCase();
-            String anio = arregloFechas[2];
+            String anio = arregloFechas[2]; */
+          
+          
             parametros.put("fechaEntrega", reporteDto.getFechaEntrega());
-            parametros.put("diaFechaEntrega", dia);
-            parametros.put("mesFechaEntrega", mes);
-            parametros.put("anioFechaEntrega", anio);
+            DateFormat dia = new SimpleDateFormat("dd", new Locale("es", "MX"));
+            parametros.put("diaFechaEntrega", dia.format(dateF));
+            DateFormat mes = new SimpleDateFormat("MMMM", new Locale("es", "MX"));
+            parametros.put("mesFechaEntrega", mes.format(dateF).toUpperCase());
+            DateFormat anio = new SimpleDateFormat("yyyy", new Locale("es", "MX"));
+            parametros.put("anioFechaEntrega", anio.format(dateF));
 
         }
 

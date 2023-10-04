@@ -538,7 +538,7 @@ public class ValeSalidaServiceImpl implements ValeSalidaService {
                 }
                 if (valeSalidaResponse.getFechaEntrada() != null) {
                     resultado.setFechaEntrada(valeSalidaResponse.getFechaEntrada());
-                    resultado.setFechaEntradaTmp(new SimpleDateFormat(patternFecha).parse(valeSalidaResponse.getFechaEntrada()));
+                   // resultado.setFechaEntradaTmp(new SimpleDateFormat(patternFecha).parse(valeSalidaResponse.getFechaEntrada()));
                 }
 
                 resultado.setCantidadArticulos(valeSalidaResponse.getTotalArticulos());
