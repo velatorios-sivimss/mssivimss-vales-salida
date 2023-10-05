@@ -600,8 +600,6 @@ public class ValeSalida {
      */
     public Map<String, Object> recuperarDatosFormato(ReporteDto reporteDto) throws ParseException {
         Map<String, Object> parametros = new HashMap<>();
-        parametros.put("logoImss", "");
-        parametros.put("logoSistema", "");
         parametros.put(PARAM_ID_VALE_SALIDA, reporteDto.getIdValeSalida());
         parametros.put("nombreDelegacion", reporteDto.getNombreDelegacion());
         parametros.put("nombreVelatorio", reporteDto.getNombreVelatorio());
