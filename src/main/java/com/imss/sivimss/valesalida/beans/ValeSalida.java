@@ -609,7 +609,6 @@ public class ValeSalida {
         parametros.put(PARAM_FOLIO_ODS, reporteDto.getFolioOds());
         parametros.put("fechaSalida", reporteDto.getFechaSalida());
         parametros.put("domicilio", reporteDto.getDomicilio());
-        parametros.put("ciudad", reporteDto.getEstado());
         parametros.put("nombreResponsableInstalacion", reporteDto.getNombreResponsableInstalacion());
         parametros.put("matriculaResponsableInstalacion", reporteDto.getMatriculaResponsableInstalacion());
         final String condicion = "WHERE " +
@@ -644,7 +643,8 @@ public class ValeSalida {
             parametros.put("mesFechaEntrega", mes.format(dateF).toUpperCase());
             DateFormat anio = new SimpleDateFormat("yyyy", new Locale("es", "MX"));
             parametros.put("anioFechaEntrega", anio.format(dateF));
-            parametros.put("ciudad", reporteDto.getEstado());
+        	 parametros.put("ciudad", reporteDto.getEstado()); 
+           
         }
 
         
