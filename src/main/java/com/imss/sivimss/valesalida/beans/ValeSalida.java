@@ -36,7 +36,7 @@ public class ValeSalida {
     private static final String ALIAS_NOMBRE_FINADO = "nombreFinado";
 
     private static final int TIPO_SERVICIO_RENTA_EQUIPO = 2;
-    private static final String CURRENT_TIMESTAMP = "CURRENT_TIMESTAMP";
+    private static final String CURRENT_TIMESTAMP = "CURRENT_DATE";
     private static final int ESTATUS_ODS_GENERADA = 2;
     private static final int ESTATUS_ELIMINADA = 0;
     private static final int ESTATUS_SALIDA = 1;
@@ -428,7 +428,8 @@ public class ValeSalida {
         queryHelper.agregarParametroValues(FEC_ALTA, CURRENT_TIMESTAMP);
 
         String queriesArticulos = crearDetalleVale(articulos, idUsuario);
-        String query = queryHelper.obtenerQueryInsertar() + queriesArticulos;
+        String queryOds = actualizarEstatusOds(valeSalida.getIdOds(), idUsuario);
+        String query = queryHelper.obtenerQueryInsertar() + queriesArticulos +"$$" + queryOds;
         parametros.put(AppConstantes.QUERY, getBinary(query));
         parametros.put("separador", "$$");
         parametros.put("replace", "idTabla");
@@ -436,7 +437,16 @@ public class ValeSalida {
         return datos;
     }
 
-    /**
+    private String actualizarEstatusOds(Long idOds, Integer idUsuario) {
+    	 final QueryHelper q = new QueryHelper("UPDATE SVC_ORDEN_SERVICIO");
+	        q.agregarParametroValues("ID_ESTATUS_ORDEN_SERVICIO ", "3");
+	        q.agregarParametroValues("ID_USUARIO_MODIFICA ", idUsuario.toString());
+			q.agregarParametroValues("FEC_ACTUALIZACION ", CURRENT_TIMESTAMP);
+	        q.addWhere("ID_ORDEN_SERVICIO =" +idOds);
+	        return q.obtenerQueryActualizar();
+	}
+
+	/**
      * Crea los registros del detalle del Vale de salida, para que se pueda hacer la relaci&oacute;n entre
      * Vale de Salida y su Detalle.
      *
