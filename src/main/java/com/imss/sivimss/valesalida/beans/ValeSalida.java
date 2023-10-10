@@ -317,13 +317,13 @@ public class ValeSalida {
                         "ods.CVE_FOLIO as request",
                         recuperaNombre(ALIAS_PER_CONTRATANTE, ALIAS_NOMBRE_CONTRATANTE),
                         recuperaNombre(ALIAS_PER_FINADO, ALIAS_NOMBRE_FINADO),
-                        "domicilio.DES_CALLE as calle",
-                        "domicilio.NUM_EXTERIOR as numExt",
-                        "domicilio.NUM_INTERIOR as numInt",
-                        "domicilio.DES_COLONIA as colonia",
-                        "domicilio.DES_ESTADO as estado",
-                        "domicilio.DES_MUNICIPIO as municipio",
-                        "domicilio.DES_CP as codigoPostal")
+                        "IFNULL(domicilio.DES_CALLE, '') as calle",
+                        "IFNULL(domicilio.NUM_EXTERIOR,'') as numExt",
+                        "IFNULL(domicilio.NUM_INTERIOR,'') as numInt",
+                        "IFNULL(domicilio.DES_COLONIA,'') as colonia",
+                        "IFNULL(domicilio.DES_ESTADO,'') as estado",
+                        "IFNULL(domicilio.DES_MUNICIPIO, '') as municipio",
+                        "IFNULL(domicilio.DES_CP,'') as codigoPostal")
                 .from("SVC_ORDEN_SERVICIO ods")
                 .join("SVC_VELATORIO v",
                         "v.ID_VELATORIO = ods.ID_VELATORIO")
@@ -339,7 +339,7 @@ public class ValeSalida {
                 .join("SVC_INFORMACION_SERVICIO infoServ", "infoServ.ID_ORDEN_SERVICIO = ods.ID_ORDEN_SERVICIO")
                 .join(SVC_INFORMACION_SERVICIO_VELACION + " infoOds",
                         "infoOds.ID_INFORMACION_SERVICIO = infoServ.ID_INFORMACION_SERVICIO")
-                .join("SVT_DOMICILIO domicilio", "domicilio.ID_DOMICILIO = infoOds.ID_DOMICILIO");
+                .leftJoin("SVT_DOMICILIO domicilio", "domicilio.ID_DOMICILIO = infoOds.ID_DOMICILIO");
 
         queryUtil.where(
                         "ods.CVE_FOLIO = :folioOds",

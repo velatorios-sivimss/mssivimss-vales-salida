@@ -56,7 +56,10 @@ public class ValeSalidaDto {
     private List<DetalleValeSalidaRequest> articulos;
 
     public String recuperarDomicilio() {
-        return calle + " " + numExt + (numInt != null ? numInt + ", " : ", ") + colonia + ", " + municipio + ", " + estado + ", " + cp;
+        if(calle!=null) {
+        	return calle + " " + numExt + (numInt != null ? numInt + ", " : ", ") + colonia + ", " + municipio + ", " + estado + ", " + cp;
+        }
+    	return null;
     }
 
     /**
