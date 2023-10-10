@@ -343,14 +343,13 @@ public class ValeSalida {
 
         queryUtil.where(
                         "ods.CVE_FOLIO = :folioOds",
-                        "ods.ID_ESTATUS_ORDEN_SERVICIO = " + ESTATUS_ODS_GENERADA,
+                        "ods.ID_ESTATUS_ORDEN_SERVICIO IN (" + ESTATUS_ODS_GENERADA+", 3)",
                         "d.ID_DELEGACION = :idDelegacion",
                         "v.ID_VELATORIO = :idVelatorio")
                 .setParameter(PARAM_FOLIO_ODS, request.getFolioOds())
                 .setParameter(PARAM_ID_DELEGACION, request.getIdDelegacion())
                 .setParameter(PARAM_ID_VELATORIO, request.getIdVelatorio())
                 .groupBy("ods.ID_ORDEN_SERVICIO");
-
         return getDatosRequest(queryUtil);
     }
 
@@ -572,6 +571,7 @@ public class ValeSalida {
      *
      * @return
      */
+   //
     public DatosRequest consultarFoliosOds(ConsultaFoliosRequest request) {
         SelectQueryUtil queryUtil = new SelectQueryUtil();
         queryUtil.select("ods.ID_ORDEN_SERVICIO as idOds",
@@ -579,7 +579,7 @@ public class ValeSalida {
                 .from("SVC_ORDEN_SERVICIO ods")
                 .join("SVC_VELATORIO velatorio", "velatorio.ID_VELATORIO = ods.ID_VELATORIO")
                 .join("SVC_DELEGACION delegacion", "delegacion.ID_DELEGACION = velatorio.ID_DELEGACION")
-                .where("ID_ESTATUS_ORDEN_SERVICIO = 2");
+                .where("ID_ESTATUS_ORDEN_SERVICIO IN (2,3)");
         if (request.getIdDelegacion() != null) {
             queryUtil.and("delegacion.ID_DELEGACION = :idDelegacion")
                     .setParameter(PARAM_ID_DELEGACION, request.getIdDelegacion());
