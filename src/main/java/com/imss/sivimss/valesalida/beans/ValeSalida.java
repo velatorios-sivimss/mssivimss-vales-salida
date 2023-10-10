@@ -87,7 +87,7 @@ public class ValeSalida {
      */
     public DatosRequest consultarDetalle(long id, Integer idDelegacion) {
         SelectQueryUtil queryUtil = new SelectQueryUtil();
-
+log.info("--->"+id);
         final String condicionEstatusEntrada = "dvs." + ID_ESTATUS + " = " + ESTATUS_ENTRADA;
         final String condicionEstatusSalida = "dvs." + ID_ESTATUS + " = " + ESTATUS_SALIDA;
 
@@ -139,7 +139,7 @@ public class ValeSalida {
                         "infoServ." + ID_ORDEN_SERVICIO + " = " + ALIAS_ODS + "." + ID_ORDEN_SERVICIO)
                 .join(SVC_INFORMACION_SERVICIO_VELACION + " infoOds",
                         "infoOds.ID_INFORMACION_SERVICIO = infoServ.ID_INFORMACION_SERVICIO")
-                .join(SVT_DOMICILIO + " domicilio",
+                .leftJoin(SVT_DOMICILIO + " domicilio",
                         "domicilio.ID_DOMICILIO = infoOds.ID_DOMICILIO")
                 .leftJoin("SVT_VALE_SALIDADETALLE dvs",
                         "dvs." + ID_VALE_SALIDA + " = vs." + ID_VALE_SALIDA,
