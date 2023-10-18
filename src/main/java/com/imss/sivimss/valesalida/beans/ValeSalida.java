@@ -55,7 +55,7 @@ public class ValeSalida {
     private static final String FEC_ALTA = "FEC_ALTA";
     private static final String CAN_ARTICULOS = "CAN_ARTICULOS";
 
-    private static final String DES_NOM_ARTICULO = "DES_NOM_ARTICULO";
+    private static final String DES_NOM_ARTICULO = "REF_ARTICULO_NOMBRE";
     // params
     private static final String PARAM_ID_VELATORIO = "idVelatorio";
     private static final String PARAM_ID_VALE_SALIDA = "idValeSalida";
@@ -110,18 +110,18 @@ log.info("--->"+id);
                         "vs.NOM_RESPON_ENTREGA as nombreResponsableEntrega",
                         "vs.CVE_MATRICULA_RESPON as matriculaResponsableEntrega",
                         "vs.CAN_ARTICULOS as totalArticulos",
-                        "domicilio.DES_CALLE as calle",
+                        "domicilio.REF_CALLE as calle",
                         "domicilio.NUM_EXTERIOR as numExt",
                         "domicilio.NUM_INTERIOR as numInt",
-                        "domicilio.DES_COLONIA as colonia",
-                        "domicilio.DES_ESTADO as estado",
-                        "domicilio.DES_MUNICIPIO as municipio",
-                        "domicilio.DES_CP as codigoPostal",
+                        "domicilio.REF_COLONIA as colonia",
+                        "domicilio.REF_ESTADO as estado",
+                        "domicilio.REF_MUNICIPIO as municipio",
+                        "domicilio.REF_CP as codigoPostal",
                         "dvs.ID_INVENTARIO as idArticulo",
                         "IF(DATEDIFF(NOW(), vs.FEC_SALIDA) >= IFNULL(vs.NUM_DIA_NOVENARIO, (" + generarQueryParametros().build() + ")), 1, 0) as validacionDias",
                         "inventario." + DES_NOM_ARTICULO + " as nombreArticulo",
                         "dvs.CAN_ARTICULOS as cantidadArticulos",
-                        "dvs.DES_OBSERVACION as observaciones")
+                        "dvs.REF_OBSERVACION as observaciones")
                 .from("SVT_VALE_SALIDA vs")
                 .join(SVC_VELATORIO + " v", "vs.ID_VELATORIO = v.ID_VELATORIO")
                 .join(SVC_DELEGACION + " d", "d.ID_DELEGACION = v.ID_DELEGACION")
@@ -317,13 +317,13 @@ log.info("--->"+id);
                         "ods.CVE_FOLIO as request",
                         recuperaNombre(ALIAS_PER_CONTRATANTE, ALIAS_NOMBRE_CONTRATANTE),
                         recuperaNombre(ALIAS_PER_FINADO, ALIAS_NOMBRE_FINADO),
-                        "IFNULL(domicilio.DES_CALLE, '') as calle",
+                        "IFNULL(domicilio.REF_CALLE, '') as calle",
                         "IFNULL(domicilio.NUM_EXTERIOR,'') as numExt",
                         "IFNULL(domicilio.NUM_INTERIOR,'') as numInt",
-                        "IFNULL(domicilio.DES_COLONIA,'') as colonia",
-                        "IFNULL(domicilio.DES_ESTADO,'') as estado",
-                        "IFNULL(domicilio.DES_MUNICIPIO, '') as municipio",
-                        "IFNULL(domicilio.DES_CP,'') as codigoPostal")
+                        "IFNULL(domicilio.REF_COLONIA,'') as colonia",
+                        "IFNULL(domicilio.REF_ESTADO,'') as estado",
+                        "IFNULL(domicilio.REF_MUNICIPIO, '') as municipio",
+                        "IFNULL(domicilio.REF_CP,'') as codigoPostal")
                 .from("SVC_ORDEN_SERVICIO ods")
                 .join("SVC_VELATORIO v",
                         "v.ID_VELATORIO = ods.ID_VELATORIO")
@@ -460,7 +460,7 @@ log.info("--->"+id);
             queryHelper.agregarParametroValues(ID_VALE_SALIDA, "idTabla");
             queryHelper.agregarParametroValues("ID_INVENTARIO", String.valueOf(detalleValeSalida.getIdInventario()));
             queryHelper.agregarParametroValues(CAN_ARTICULOS, String.valueOf(detalleValeSalida.getCantidad()));
-            queryHelper.agregarParametroValues("DES_OBSERVACION", "'" + detalleValeSalida.getObservaciones() + "'");
+            queryHelper.agregarParametroValues("REF_OBSERVACION", "'" + detalleValeSalida.getObservaciones() + "'");
 
             queryHelper.agregarParametroValues(ID_USUARIO_ALTA, String.valueOf(idUsuario));
             queryHelper.agregarParametroValues(FEC_ALTA, CURRENT_TIMESTAMP);
@@ -551,7 +551,7 @@ log.info("--->"+id);
         queryHelper.agregarParametroValues(ID_VALE_SALIDA, String.valueOf(idValeSalida));
         queryHelper.agregarParametroValues("ID_INVENTARIO", String.valueOf(articulo.getIdInventario()));
         queryHelper.agregarParametroValues(CAN_ARTICULOS, String.valueOf(articulo.getCantidad()));
-        queryHelper.agregarParametroValues("DES_OBSERVACION", "'" + articulo.getObservaciones() + "'");
+        queryHelper.agregarParametroValues("REF_OBSERVACION", "'" + articulo.getObservaciones() + "'");
         queryHelper.agregarParametroValues(ID_ESTATUS, String.valueOf(estatus));
 
         queryHelper.agregarParametroValues(ID_USUARIO_ALTA, String.valueOf(idUsuario));
